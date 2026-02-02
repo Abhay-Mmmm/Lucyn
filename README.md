@@ -111,6 +111,146 @@ npm run dev
 
 The app will be available at `http://localhost:3000`
 
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+npm run test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+### Testing Locally Without External Services
+
+You can test the dashboard UI without connecting to external services:
+
+1. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+
+2. **Visit the dashboard:** Navigate to `http://localhost:3000/dashboard`
+   - The dashboard displays mock data for all pages
+   - Explore Team, Repositories, Insights, Tasks, and Slack pages
+
+### Testing GitHub Integration
+
+1. **Create a GitHub App:**
+   - Go to GitHub Settings → Developer Settings → GitHub Apps
+   - Create a new app with these permissions:
+     - Repository: Contents (Read), Pull Requests (Read), Metadata (Read)
+     - Subscribe to events: Push, Pull Request, Installation
+   - Set webhook URL to `https://your-domain.com/api/github/webhook`
+
+2. **Configure environment variables:**
+   ```bash
+   GITHUB_APP_ID=your_app_id
+   GITHUB_CLIENT_ID=your_client_id
+   GITHUB_CLIENT_SECRET=your_client_secret
+   GITHUB_WEBHOOK_SECRET=your_webhook_secret
+   ```
+
+3. **Test with ngrok (local development):**
+   ```bash
+   ngrok http 3000
+   # Use the ngrok URL as your webhook endpoint
+   ```
+
+4. **Verify webhook delivery:**
+   - Install the app on a test repository
+   - Make a commit or open a PR
+   - Check the worker logs for processing events
+
+### Testing Slack Integration
+
+1. **Create a Slack App:**
+   - Go to [api.slack.com/apps](https://api.slack.com/apps)
+   - Create a new app with these scopes:
+     - `chat:write`, `im:write`, `users:read`, `channels:read`
+   - Enable Event Subscriptions with URL: `https://your-domain.com/api/slack/events`
+   - Subscribe to: `app_mention`, `message.im`, `reaction_added`
+
+2. **Configure environment variables:**
+   ```bash
+   SLACK_CLIENT_ID=your_client_id
+   SLACK_CLIENT_SECRET=your_client_secret
+   SLACK_SIGNING_SECRET=your_signing_secret
+   SLACK_BOT_TOKEN=xoxb-your-bot-token
+   ```
+
+3. **Test the bot:**
+   - Install the app to your workspace
+   - Mention @lucyn in a channel
+   - Check logs for event processing
+
+### Testing the Worker
+
+1. **Start Redis locally:**
+   ```bash
+   docker run -d -p 6379:6379 redis:alpine
+   ```
+
+2. **Run the worker:**
+   ```bash
+   npm run worker:dev
+   ```
+
+3. **Manually queue a job (for testing):**
+   ```typescript
+   // In a test script or API route
+   import { githubQueue } from '@lucyn/worker';
+   
+   await githubQueue.add('process-commit', {
+     repositoryId: 'test-repo-id',
+     commitSha: 'abc123',
+     message: 'feat: add new feature',
+     authorEmail: 'dev@example.com',
+     authorName: 'Test Developer',
+     additions: 50,
+     deletions: 10,
+     filesChanged: 5,
+     committedAt: new Date().toISOString(),
+   });
+   ```
+
+### Testing AI Features
+
+1. **Set your OpenAI API key:**
+   ```bash
+   OPENAI_API_KEY=sk-your-api-key
+   ```
+
+2. **Test AI chains directly:**
+   ```typescript
+   import { analyzeCommit, reviewPullRequest } from '@lucyn/ai';
+   
+   // Test commit analysis
+   const result = await analyzeCommit({
+     message: 'fix: resolve memory leak in data pipeline',
+     filesCount: 3,
+     additions: 25,
+     deletions: 10,
+   });
+   console.log(result);
+   ```
+
+### End-to-End Testing Checklist
+
+- [ ] Dashboard loads with mock data
+- [ ] Login/signup pages render correctly
+- [ ] GitHub OAuth flow completes successfully
+- [ ] Slack OAuth flow completes successfully
+- [ ] Webhooks are received and processed
+- [ ] Worker processes jobs from queue
+- [ ] AI analysis returns valid responses
+- [ ] Database migrations run without errors
+
 ### Environment Variables
 
 ```bash

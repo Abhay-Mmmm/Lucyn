@@ -1,0 +1,435 @@
+// packages/database/prisma/schema.prisma
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  ADMIN
+  MANAGER
+  MEMBER
+}
+
+enum PRState {
+  OPEN
+  CLOSED
+  MERGED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  CANCELLED
+}
+
+enum InsightType {
+  VELOCITY
+  QUALITY
+  HEALTH
+  RISK
+  OPPORTUNITY
+  RECOMMENDATION
+}
+
+enum Severity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum FeedbackType {
+  COMMIT_TIP
+  PR_SUGGESTION
+  REFACTOR_HINT
+  ACHIEVEMENT
+}
+
+enum WorkloadTrend {
+  INCREASING
+  STABLE
+  DECREASING
+}
+
+enum BurnoutRisk {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// ============================================
+// CORE MODELS
+// ============================================
+
+model Organization {
+  id             String   @id @default(cuid())
+  name           String
+  slug           String   @unique
+  domain         String?
+  logoUrl        String?
+  githubOrgId    String?  @unique
+  githubOrgLogin String?
+  slackTeamId    String?  @unique
+  slackTeamName  String?
+  settings       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  users        User[]
+  repositories Repository[]
+  tasks        Task[]
+  insights     Insight[]
+  meetings     Meeting[]
+  syncLogs     SyncLog[]
+
+  @@map("organizations")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String?
+  avatarUrl         String?
+  role              Role      @default(MEMBER)
+  githubId          String?   @unique
+  githubUsername    String?
+  slackId           String?
+  slackUsername     String?
+  feedbackEnabled   Boolean   @default(true)
+  feedbackFrequency String    @default("daily")
+  timezone          String    @default("UTC")
+  lastActiveAt      DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  commits          Commit[]
+  pullRequests     PullRequest[]      @relation("PRAuthor")
+  reviewedPRs      PullRequest[]      @relation("PRReviewers")
+  profile          DeveloperProfile?
+  assignedTasks    Task[]             @relation("TaskAssignee")
+  suggestedTasks   Task[]             @relation("TaskSuggested")
+  slackFeedback    SlackFeedback[]
+
+  @@index([organizationId])
+  @@index([githubUsername])
+  @@index([email])
+  @@map("users")
+}
+
+model Repository {
+  id             String    @id @default(cuid())
+  githubId       String    @unique
+  name           String
+  fullName       String
+  description    String?
+  defaultBranch  String    @default("main")
+  language       String?
+  isPrivate      Boolean   @default(true)
+  isActive       Boolean   @default(true)
+  webhookId      String?
+  lastSyncedAt   DateTime?
+  settings       Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  commits        Commit[]
+  pullRequests   PullRequest[]
+  tasks          Task[]
+  codeEmbeddings CodeEmbedding[]
+
+  @@index([organizationId])
+  @@index([fullName])
+  @@map("repositories")
+}
+
+model Commit {
+  id           String   @id @default(cuid())
+  sha          String   @unique
+  message      String
+  messageScore Float?
+  additions    Int      @default(0)
+  deletions    Int      @default(0)
+  filesChanged Int      @default(0)
+  analysis     Json?
+  committedAt  DateTime
+  createdAt    DateTime @default(now())
+
+  // Relations
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  repositoryId String
+  author       User?      @relation(fields: [authorId], references: [id])
+  authorId     String?
+
+  slackFeedback SlackFeedback[]
+
+  @@index([repositoryId])
+  @@index([authorId])
+  @@index([committedAt])
+  @@map("commits")
+}
+
+model PullRequest {
+  id                 String    @id @default(cuid())
+  githubId           String    @unique
+  number             Int
+  title              String
+  body               String?
+  state              PRState   @default(OPEN)
+  isDraft            Boolean   @default(false)
+  additions          Int       @default(0)
+  deletions          Int       @default(0)
+  filesChanged       Int       @default(0)
+  commitsCount       Int       @default(0)
+  reviewsCount       Int       @default(0)
+  commentsCount      Int       @default(0)
+  qualityScore       Float?
+  timeToFirstReview  Int?      // minutes
+  timeToMerge        Int?      // minutes
+  analysis           Json?
+  labels             String[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  mergedAt           DateTime?
+  closedAt           DateTime?
+
+  // Relations
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  repositoryId String
+  author       User?      @relation("PRAuthor", fields: [authorId], references: [id])
+  authorId     String?
+  reviewers    User[]     @relation("PRReviewers")
+
+  slackFeedback SlackFeedback[]
+
+  @@index([repositoryId])
+  @@index([authorId])
+  @@index([state])
+  @@index([createdAt])
+  @@map("pull_requests")
+}
+
+// ============================================
+// INTELLIGENCE MODELS
+// ============================================
+
+model DeveloperProfile {
+  id                 String       @id @default(cuid())
+  skills             Json         @default("[]")
+  strengths          String[]
+  areasForGrowth     String[]
+  preferredLanguages String[]
+  codeQualityScore   Float?
+  velocityScore      Float?
+  collaborationScore Float?
+  currentWorkload    Int          @default(0)
+  workloadTrend      WorkloadTrend @default(STABLE)
+  burnoutRisk        BurnoutRisk  @default(LOW)
+  averageCommitSize  Float?
+  averagePRSize      Float?
+  reviewTurnaround   Float?       // hours
+  lastAnalyzedAt     DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+
+  @@map("developer_profiles")
+}
+
+model Insight {
+  id             String      @id @default(cuid())
+  type           InsightType
+  severity       Severity    @default(INFO)
+  title          String
+  description    String
+  data           Json?
+  recommendation String?
+  isRead         Boolean     @default(false)
+  isDismissed    Boolean     @default(false)
+  expiresAt      DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  @@index([organizationId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("insights")
+}
+
+// ============================================
+// TASK MANAGEMENT
+// ============================================
+
+model Task {
+  id                  String     @id @default(cuid())
+  externalId          String?
+  source              String     @default("lucyn") // lucyn, github, jira, linear
+  title               String
+  description         String?
+  status              TaskStatus @default(TODO)
+  priority            Priority   @default(MEDIUM)
+  estimatedHours      Float?
+  actualHours         Float?
+  requiredSkills      String[]
+  complexity          Int?       // 1-10
+  suggestedAssigneeId String?
+  assignmentReason    String?
+  dueDate             DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  repository     Repository?  @relation(fields: [repositoryId], references: [id])
+  repositoryId   String?
+  assignee       User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  assigneeId     String?
+  suggestedUser  User?        @relation("TaskSuggested", fields: [suggestedAssigneeId], references: [id])
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([assigneeId])
+  @@map("tasks")
+}
+
+// ============================================
+// SLACK INTEGRATION
+// ============================================
+
+model SlackFeedback {
+  id             String       @id @default(cuid())
+  type           FeedbackType
+  message        String
+  channelId      String?
+  messageTs      String?
+  wasHelpful     Boolean?
+  userResponse   String?
+  deliveredAt    DateTime?
+  createdAt      DateTime     @default(now())
+
+  // Relations
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  commit        Commit?      @relation(fields: [commitId], references: [id])
+  commitId      String?
+  pullRequest   PullRequest? @relation(fields: [pullRequestId], references: [id])
+  pullRequestId String?
+
+  @@index([userId])
+  @@map("slack_feedback")
+}
+
+// ============================================
+// MEETING INTEGRATION (Phase 2)
+// ============================================
+
+model Meeting {
+  id               String    @id @default(cuid())
+  externalId       String?
+  platform         String    @default("google_meet")
+  title            String?
+  scheduledStart   DateTime?
+  scheduledEnd     DateTime?
+  actualStart      DateTime?
+  actualEnd        DateTime?
+  transcript       String?
+  summary          String?
+  actionItems      Json?
+  decisions        Json?
+  participants     String[]
+  recordingUrl     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  @@index([organizationId])
+  @@index([scheduledStart])
+  @@map("meetings")
+}
+
+// ============================================
+// SYSTEM
+// ============================================
+
+model SyncLog {
+  id             String    @id @default(cuid())
+  entityType     String    // repository, commits, pull_requests
+  entityId       String?
+  status         String    // pending, in_progress, completed, failed
+  itemsProcessed Int       @default(0)
+  itemsFailed    Int       @default(0)
+  error          String?
+  metadata       Json?
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  @@index([organizationId])
+  @@index([entityType])
+  @@map("sync_logs")
+}
+
+// ============================================
+// VECTOR STORAGE (pgvector)
+// ============================================
+
+model CodeEmbedding {
+  id           String                       @id @default(cuid())
+  filePath     String
+  content      String
+  contentHash  String
+  embedding    Unsupported("vector(1536)")?
+  metadata     Json?
+  createdAt    DateTime                     @default(now())
+  updatedAt    DateTime                     @updatedAt
+
+  // Relations
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  repositoryId String
+
+  @@unique([repositoryId, filePath])
+  @@index([repositoryId])
+  @@map("code_embeddings")
+}

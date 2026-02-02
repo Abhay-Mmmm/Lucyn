@@ -1,0 +1,34 @@
+{
+  "name": "lucyn",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The AI Product Engineer that works inside your company",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "db:generate": "turbo run db:generate --filter=@lucyn/database",
+    "db:migrate": "turbo run db:migrate --filter=@lucyn/database",
+    "db:push": "turbo run db:push --filter=@lucyn/database",
+    "db:seed": "turbo run db:seed --filter=@lucyn/database",
+    "clean": "turbo run clean && rimraf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0",
+    "rimraf": "^5.0.5",
+    "turbo": "^1.11.0",
+    "typescript": "^5.3.0"
+  },
+  "packageManager": "npm@10.2.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
