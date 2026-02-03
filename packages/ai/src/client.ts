@@ -27,7 +27,7 @@ export interface CompletionOptions {
 }
 
 const DEFAULT_OPTIONS: Required<CompletionOptions> = {
-  model: 'gpt-4-turbo-preview',
+  model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
   temperature: 0.7,
   maxTokens: 1000,
   systemPrompt: 'You are Lucyn, an AI Product Engineer that helps software teams work more effectively.',
