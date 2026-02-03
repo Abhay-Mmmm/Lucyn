@@ -58,7 +58,7 @@ export async function processCommit(data: ProcessCommitData) {
 
     // If commit needs improvement, queue feedback
     if (analysis.sentiment === 'needs_improvement' && author?.feedbackEnabled) {
-      // Queue Slack feedback job
+      // Queue Discord feedback job
       console.log('Queuing feedback for commit improvement');
     }
 

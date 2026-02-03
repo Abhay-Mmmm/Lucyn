@@ -65,7 +65,7 @@ export default function Home() {
               />
               <FeatureCard
                 icon={<MessageSquare className="w-10 h-10" />}
-                title="Slack Feedback"
+                title="Discord Feedback"
                 description="Personalized tips and guidance delivered directly to developers."
               />
               <FeatureCard

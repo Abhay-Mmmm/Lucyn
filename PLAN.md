@@ -34,7 +34,7 @@ Lucyn is an AI-powered engineering intelligence platform that transforms raw eng
 | Feature | Priority | Status |
 |---------|----------|--------|
 | GitHub Data Ingestion | P0 | Planned |
-| Slack Feedback Agent | P0 | Planned |
+| Discord Feedback Agent | P0 | Planned |
 | CEO Dashboard | P0 | Planned |
 | Task Assignment Suggestions | P1 | Planned |
 | Developer Profiles | P1 | Planned |
@@ -56,8 +56,8 @@ Lucyn is an AI-powered engineering intelligence platform that transforms raw eng
 │                              CLIENT LAYER                                    │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐  │
-│  │   CEO Dashboard     │  │   Admin Portal      │  │   Slack App         │  │
-│  │   (Next.js)         │  │   (Next.js)         │  │   (Bolt SDK)        │  │
+│  │   CEO Dashboard     │  │   Admin Portal      │  │   Discord Bot       │  │
+│  │   (Next.js)         │  │   (Next.js)         │  │   (discord.js)      │  │
 │  └─────────────────────┘  └─────────────────────┘  └─────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
@@ -80,7 +80,7 @@ Lucyn is an AI-powered engineering intelligence platform that transforms raw eng
 │   WEBHOOK HANDLERS  │  │   BACKGROUND JOBS   │  │   AI/LLM SERVICE        │
 ├─────────────────────┤  ├─────────────────────┤  ├─────────────────────────┤
 │ • GitHub Webhooks   │  │ • Commit Processor  │  │ • OpenAI GPT-4 API      │
-│ • Slack Events      │  │ • PR Analyzer       │  │ • Prompt Templates      │
+│ • Discord Events    │  │ • PR Analyzer       │  │ • Prompt Templates      │
 │ • Event Queue       │  │ • Metrics Computer  │  │ • Response Caching      │
 │                     │  │ • Insight Generator │  │ • Embeddings (pgvector) │
 └─────────────────────┘  └─────────────────────┘  └─────────────────────────┘
@@ -155,7 +155,7 @@ Lucyn is an AI-powered engineering intelligence platform that transforms raw eng
 | Integration | SDK/API | Purpose |
 |-------------|---------|---------|
 | **GitHub** | Octokit + REST API | OAuth, webhooks, data fetching |
-| **Slack** | Bolt SDK | Bot, events, interactive messages |
+| **Discord** | discord.js | Bot, events, interactions |
 | **OpenAI** | openai npm package | LLM completions, embeddings |
 
 ---
@@ -184,8 +184,8 @@ lucyn/
 │   │   │   │   ├── github/
 │   │   │   │   │   ├── callback/
 │   │   │   │   │   └── webhook/
-│   │   │   │   ├── slack/
-│   │   │   │   │   ├── install/
+│   │   │   │   ├── discord/
+│   │   │   │   │   ├── callback/
 │   │   │   │   │   └── events/
 │   │   │   │   ├── dashboard/
 │   │   │   │   ├── developers/
@@ -217,7 +217,7 @@ lucyn/
 │       │   │   ├── analytics/
 │       │   │   │   ├── computeMetrics.ts
 │       │   │   │   └── generateInsights.ts
-│       │   │   └── slack/
+│       │   │   └── discord/
 │       │   │       └── sendFeedback.ts
 │       │   ├── queues/
 │       │   ├── services/
@@ -385,8 +385,8 @@ model Organization {
   avatarUrl      String?
   githubOrgId    BigInt?  @unique
   githubOrgLogin String?
-  slackTeamId    String?  @unique
-  slackTeamName  String?
+  discordGuildId   String?  @unique
+  discordGuildName String?
   settings       Json     @default("{}")
   plan           String   @default("free")
   createdAt      DateTime @default(now())
@@ -413,7 +413,7 @@ model User {
   githubId          BigInt?   @unique
   githubUsername    String?
   githubAccessToken String?   // encrypted
-  slackUserId       String?
+  discordUserId     String?
   isActive          Boolean   @default(true)
   lastSeenAt        DateTime?
   createdAt         DateTime  @default(now())
@@ -426,7 +426,7 @@ model User {
   pullRequests      PullRequest[]
   assignedTasks     Task[]             @relation("TaskAssignee")
   suggestedTasks    Task[]             @relation("TaskSuggested")
-  slackFeedback     SlackFeedback[]
+  discordFeedback   DiscordFeedback[]
 
   @@index([organizationId])
   @@index([githubUsername])
@@ -630,15 +630,15 @@ model Task {
 }
 
 // ============================================
-// SLACK INTEGRATION
+// DISCORD INTEGRATION
 // ============================================
 
-model SlackFeedback {
+model DiscordFeedback {
   id             String       @id @default(cuid())
   userId         String
   type           FeedbackType
   channelId      String?
-  messageTs      String?      // Slack message timestamp
+  messageId      String?      // Discord message ID
   content        String
   context        Json         @default("{}")
   reaction       String?      // thumbs_up, thumbs_down
@@ -651,7 +651,7 @@ model SlackFeedback {
 
   @@index([userId])
   @@index([type])
-  @@map("slack_feedback")
+  @@map("discord_feedback")
 }
 
 // ============================================
@@ -768,14 +768,14 @@ model CodeEmbedding {
 | POST | `/api/github/repos/:id/sync` | Trigger repo sync |
 | DELETE | `/api/github/repos/:id` | Disconnect repo |
 
-### Slack Integration
+### Discord Integration
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/slack/install` | Start Slack OAuth |
-| GET | `/api/slack/callback` | Slack OAuth callback |
-| POST | `/api/slack/events` | Slack Events API handler |
-| POST | `/api/slack/interactions` | Slack Interactivity handler |
+| GET | `/api/discord/install` | Start Discord OAuth |
+| GET | `/api/discord/callback` | Discord OAuth callback |
+| POST | `/api/discord/events` | Discord Interactions handler |
+| POST | `/api/discord/interactions` | Discord Message Components handler |
 
 ### Dashboard API
 
@@ -878,7 +878,7 @@ interface ProcessCommitJob {
 // 5. Update author's activity metrics
 ```
 
-### 7.2 Slack Feedback Agent
+### 7.2 Discord Feedback Agent
 
 #### Bot Capabilities
 | Feature | Implementation |
@@ -1351,10 +1351,10 @@ CREATE POLICY "Admins can manage organization"
 |---------|----------------|
 | **Encryption at Rest** | Supabase handles (AES-256) |
 | **Encryption in Transit** | HTTPS everywhere |
-| **Token Encryption** | Encrypt GitHub/Slack tokens before storage |
+| **Token Encryption** | Encrypt GitHub/Discord tokens before storage |
 | **Input Validation** | Zod schemas on all endpoints |
 | **Rate Limiting** | Per-user and per-org limits |
-| **Webhook Verification** | Validate GitHub/Slack signatures |
+| **Webhook Verification** | Validate GitHub/Discord signatures |
 | **Audit Logging** | Log sensitive operations |
 | **RBAC** | Admin, Manager, Member roles |
 
@@ -1511,11 +1511,12 @@ GITHUB_CLIENT_ID=xxx
 GITHUB_CLIENT_SECRET=xxx
 GITHUB_WEBHOOK_SECRET=xxx
 
-# Slack App
-SLACK_CLIENT_ID=xxx
-SLACK_CLIENT_SECRET=xxx
-SLACK_SIGNING_SECRET=xxx
-SLACK_BOT_TOKEN=xoxb-xxx
+# Discord App
+DISCORD_CLIENT_ID=xxx
+DISCORD_CLIENT_SECRET=xxx
+DISCORD_BOT_TOKEN=xxx
+DISCORD_PUBLIC_KEY=xxx
+DISCORD_GUILD_ID=xxx
 
 # OpenAI
 OPENAI_API_KEY=sk-xxx
@@ -1588,17 +1589,17 @@ NEXT_PUBLIC_APP_URL=https://app.lucyn.dev
 | Display commit/PR data in UI | 4 | - |
 | **Total** | **28** | |
 
-### Phase 3: Slack Agent (Weeks 5-6)
+### Phase 3: Discord Agent (Weeks 5-6)
 
-#### Week 5: Slack Setup
+#### Week 5: Discord Setup
 | Task | Est. Hours | Owner |
 |------|-----------|-------|
-| Create Slack App configuration | 4 | - |
-| Implement Slack OAuth flow | 6 | - |
-| Set up Bolt SDK for events | 6 | - |
+| Create Discord App configuration | 4 | - |
+| Implement Discord OAuth flow | 6 | - |
+| Set up discord.js for events | 6 | - |
 | Handle @mention events | 4 | - |
 | Create user linking flow | 4 | - |
-| Build Slack feedback templates | 4 | - |
+| Build Discord feedback templates | 4 | - |
 | **Total** | **28** | |
 
 #### Week 6: Proactive Feedback
@@ -1643,7 +1644,7 @@ NEXT_PUBLIC_APP_URL=https://app.lucyn.dev
 |-----------|------|-------------|
 | **M1: Foundation** | 2 | Working auth, dashboard shell deployed |
 | **M2: GitHub Live** | 4 | Repos connected, commits/PRs ingesting |
-| **M3: Slack Live** | 6 | Bot responding, feedback sending |
+| **M3: Discord Live** | 6 | Bot responding, feedback sending |
 | **M4: MVP Launch** | 8 | Full dashboard, insights, ready for beta |
 
 ---

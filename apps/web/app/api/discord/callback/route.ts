@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
-const SLACK_CLIENT_ID = process.env.SLACK_CLIENT_ID || '';
-const SLACK_CLIENT_SECRET = process.env.SLACK_CLIENT_SECRET || '';
+const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
+const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const error = searchParams.get('error');
 
   if (error) {
-    console.error('Slack OAuth error:', error);
+    console.error('Discord OAuth error:', error);
     return NextResponse.redirect(
       new URL(`/dashboard/settings?error=${error}`, request.url)
     );
@@ -25,23 +25,24 @@ export async function GET(request: Request) {
 
   try {
     // Exchange code for access token
-    const tokenResponse = await fetch('https://slack.com/api/oauth.v2.access', {
+    const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: SLACK_CLIENT_ID,
-        client_secret: SLACK_CLIENT_SECRET,
+        client_id: DISCORD_CLIENT_ID,
+        client_secret: DISCORD_CLIENT_SECRET,
+        grant_type: 'authorization_code',
         code,
-        redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/slack/callback`,
+        redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/discord/callback`,
       }),
     });
 
     const tokenData = await tokenResponse.json();
 
-    if (!tokenData.ok) {
-      console.error('Slack token error:', tokenData.error);
+    if (tokenData.error) {
+      console.error('Discord token error:', tokenData.error);
       return NextResponse.redirect(
         new URL(`/dashboard/settings?error=${tokenData.error}`, request.url)
       );
@@ -55,30 +56,30 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    // Extract Slack data
-    const {
-      access_token,
-      team,
-      bot_user_id,
-      authed_user,
-    } = tokenData;
+    // Get Discord user info
+    const userResponse = await fetch('https://discord.com/api/users/@me', {
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+      },
+    });
 
-    console.log('Slack connected for user:', session.user.email);
-    console.log('Slack team:', team.name);
-    console.log('Bot user ID:', bot_user_id);
+    const discordUser = await userResponse.json();
 
-    // TODO: Store Slack credentials in database
+    console.log('Discord connected for user:', session.user.email);
+    console.log('Discord user:', discordUser.username);
+
+    // TODO: Store Discord credentials in database
     // - access_token (encrypted)
-    // - team.id, team.name
-    // - bot_user_id
-    // - authed_user.id
+    // - refresh_token
+    // - discordUser.id, discordUser.username
+    // - guild_id (if bot was added to a server)
 
     // Redirect back to settings with success message
     return NextResponse.redirect(
-      new URL('/dashboard/settings?slack=connected', request.url)
+      new URL('/dashboard/settings?discord=connected', request.url)
     );
   } catch (error) {
-    console.error('Slack callback error:', error);
+    console.error('Discord callback error:', error);
     return NextResponse.redirect(
       new URL('/dashboard/settings?error=callback_failed', request.url)
     );

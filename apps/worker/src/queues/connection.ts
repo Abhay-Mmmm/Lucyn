@@ -1,6 +1,11 @@
 import IORedis from 'ioredis';
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.REDIS_URL || 'redis://localhost:6379';
+// Use REDIS_URL for ioredis connections (rediss://... format from Upstash)
+// UPSTASH_REDIS_REST_URL is for HTTP REST API only, not compatible with ioredis
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+
+// Check if we're using Upstash (requires TLS)
+const isUpstash = REDIS_URL.startsWith('rediss://');
 
 // Check if we're in development without Redis
 const isDev = process.env.NODE_ENV !== 'production';
@@ -9,6 +14,7 @@ export const connection = new IORedis(REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
   lazyConnect: true, // Don't connect immediately
+  tls: isUpstash ? { rejectUnauthorized: false } : undefined,
   retryStrategy: (times) => {
     if (isDev && times > 3) {
       console.warn('⚠️  Redis not available. Worker features disabled.');

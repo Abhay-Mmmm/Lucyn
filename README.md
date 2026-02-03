@@ -15,7 +15,7 @@ Lucyn is an AI-powered engineering intelligence platform that transforms raw eng
 Lucyn acts as a **senior team member** that:
 - **Understands your codebase** through GitHub integration
 - **Understands your people** through activity analysis
-- **Participates in discussions** via Slack and meetings
+- **Participates in discussions** via Discord and meetings
 - **Assigns work intelligently** based on skills and workload
 - **Optimizes how your team builds** through continuous insights
 
@@ -26,7 +26,7 @@ Lucyn acts as a **senior team member** that:
 - Generates developer performance profiles (growth-focused, non-punitive)
 - Tracks code health, velocity trends, and risk indicators
 
-### 💬 Slack Feedback Agent
+### 💬 Discord Feedback Agent
 - Personalized tips on commits, PRs, and best practices
 - Answers engineering questions contextually
 - Celebrates achievements and milestones
@@ -52,7 +52,7 @@ Lucyn acts as a **senior team member** that:
 | **Queue** | Redis (Upstash), BullMQ |
 | **Auth** | Supabase Auth |
 | **AI/LLM** | OpenAI GPT-4, Embeddings |
-| **Integrations** | GitHub, Slack |
+| **Integrations** | GitHub, Discord |
 
 ## 📁 Project Structure
 
@@ -79,7 +79,7 @@ lucyn/
 - Docker (for local PostgreSQL & Redis)
 - Supabase account (or local Supabase)
 - GitHub App credentials
-- Slack App credentials
+- Discord App credentials
 - OpenAI API key
 
 ### Installation
@@ -137,7 +137,7 @@ You can test the dashboard UI without connecting to external services:
 
 2. **Visit the dashboard:** Navigate to `http://localhost:3000/dashboard`
    - The dashboard displays mock data for all pages
-   - Explore Team, Repositories, Insights, Tasks, and Slack pages
+   - Explore Team, Repositories, Insights, Tasks, and Discord pages
 
 ### Testing GitHub Integration
 
@@ -167,26 +167,27 @@ You can test the dashboard UI without connecting to external services:
    - Make a commit or open a PR
    - Check the worker logs for processing events
 
-### Testing Slack Integration
+### Testing Discord Integration
 
-1. **Create a Slack App:**
-   - Go to [api.slack.com/apps](https://api.slack.com/apps)
-   - Create a new app with these scopes:
-     - `chat:write`, `im:write`, `users:read`, `channels:read`
-   - Enable Event Subscriptions with URL: `https://your-domain.com/api/slack/events`
-   - Subscribe to: `app_mention`, `message.im`, `reaction_added`
+1. **Create a Discord Application:**
+   - Go to [discord.com/developers/applications](https://discord.com/developers/applications)
+   - Create a new application
+   - Go to Bot section and create a bot
+   - Enable required intents: `GUILDS`, `GUILD_MESSAGES`, `DIRECT_MESSAGES`
+   - Set Interactions Endpoint URL to: `https://your-domain.com/api/discord/events`
 
 2. **Configure environment variables:**
    ```bash
-   SLACK_CLIENT_ID=your_client_id
-   SLACK_CLIENT_SECRET=your_client_secret
-   SLACK_SIGNING_SECRET=your_signing_secret
-   SLACK_BOT_TOKEN=xoxb-your-bot-token
+   DISCORD_CLIENT_ID=your_client_id
+   DISCORD_CLIENT_SECRET=your_client_secret
+   DISCORD_BOT_TOKEN=your_bot_token
+   DISCORD_PUBLIC_KEY=your_public_key
+   DISCORD_GUILD_ID=your_guild_id
    ```
 
 3. **Test the bot:**
-   - Install the app to your workspace
-   - Mention @lucyn in a channel
+   - Add the bot to your Discord server
+   - Use slash commands or mention the bot
    - Check logs for event processing
 
 ### Testing the Worker
@@ -245,7 +246,7 @@ You can test the dashboard UI without connecting to external services:
 - [ ] Dashboard loads with mock data
 - [ ] Login/signup pages render correctly
 - [ ] GitHub OAuth flow completes successfully
-- [ ] Slack OAuth flow completes successfully
+- [ ] Discord OAuth flow completes successfully
 - [ ] Webhooks are received and processed
 - [ ] Worker processes jobs from queue
 - [ ] AI analysis returns valid responses
@@ -270,10 +271,12 @@ GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 GITHUB_WEBHOOK_SECRET=
 
-# Slack App
-SLACK_CLIENT_ID=
-SLACK_CLIENT_SECRET=
-SLACK_SIGNING_SECRET=
+# Discord App
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+DISCORD_BOT_TOKEN=
+DISCORD_PUBLIC_KEY=
+DISCORD_GUILD_ID=
 
 # OpenAI
 OPENAI_API_KEY=
@@ -289,7 +292,7 @@ OPENAI_API_KEY=
 ### MVP (8 Weeks)
 - [x] Planning complete
 - [ ] GitHub data ingestion
-- [ ] Slack feedback agent
+- [ ] Discord feedback agent
 - [ ] CEO dashboard
 - [ ] Task assignment suggestions
 

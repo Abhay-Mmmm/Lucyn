@@ -5,7 +5,7 @@ export const APP_TAGLINE = 'The AI Product Engineer that works inside your compa
 // Feature flags
 export const FEATURES = {
   GITHUB_INTEGRATION: true,
-  SLACK_INTEGRATION: true,
+  DISCORD_INTEGRATION: true,
   MEETING_INTEGRATION: false, // Phase 2
   TASK_AUTOMATION: false, // Phase 2
 } as const;
@@ -67,12 +67,12 @@ export const GITHUB_EVENTS = [
   'repository.deleted',
 ] as const;
 
-// Slack event types
-export const SLACK_EVENTS = [
-  'app_mention',
-  'message.im',
-  'message.channels',
-  'reaction_added',
+// Discord event types
+export const DISCORD_EVENTS = [
+  'INTERACTION_CREATE',
+  'MESSAGE_CREATE',
+  'GUILD_CREATE',
+  'READY',
 ] as const;
 
 // Insight types
@@ -102,6 +102,6 @@ export const ERROR_CODES = {
   RATE_LIMITED: 'RATE_LIMITED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   GITHUB_ERROR: 'GITHUB_ERROR',
-  SLACK_ERROR: 'SLACK_ERROR',
+  DISCORD_ERROR: 'DISCORD_ERROR',
   AI_ERROR: 'AI_ERROR',
 } as const;

@@ -19,7 +19,7 @@ const navItems = [
   { href: '/dashboard/repositories', label: 'Repositories', icon: GitBranch },
   { href: '/dashboard/insights', label: 'Insights', icon: Lightbulb },
   { href: '/dashboard/tasks', label: 'Tasks', icon: ListTodo },
-  { href: '/dashboard/slack', label: 'Slack', icon: MessageSquare },
+  { href: '/dashboard/discord', label: 'Discord', icon: MessageSquare },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 

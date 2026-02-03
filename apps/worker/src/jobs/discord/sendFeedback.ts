@@ -1,7 +1,7 @@
 import { prisma } from '@lucyn/database';
 import { generateCommitTip, generatePRTip, generateAchievementMessage } from '@lucyn/ai';
 
-const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN || '';
+const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || '';
 
 export interface SendFeedbackData {
   userId: string;
@@ -15,14 +15,14 @@ export async function sendFeedback(data: SendFeedbackData) {
   console.log(`Sending ${data.type} feedback to user: ${data.userId}`);
 
   try {
-    // Get user with Slack ID
+    // Get user with Discord ID
     const user = await prisma.user.findUnique({
       where: { id: data.userId },
     });
 
-    if (!user?.slackId) {
-      console.log('User has no Slack ID, skipping feedback');
-      return { skipped: true, reason: 'no_slack_id' };
+    if (!user?.discordId) {
+      console.log('User has no Discord ID, skipping feedback');
+      return { skipped: true, reason: 'no_discord_id' };
     }
 
     if (!user.feedbackEnabled) {
@@ -78,16 +78,16 @@ export async function sendFeedback(data: SendFeedbackData) {
       }
     }
 
-    // Send Slack message
-    const slackResponse = await sendSlackDM(user.slackId, message);
+    // Send Discord DM
+    const discordResponse = await sendDiscordDM(user.discordId, message);
 
     // Record feedback in database
-    await prisma.slackFeedback.create({
+    await prisma.discordFeedback.create({
       data: {
         type: data.type.toUpperCase() as any,
         message,
-        channelId: slackResponse.channel,
-        messageTs: slackResponse.ts,
+        channelId: discordResponse.channelId,
+        messageId: discordResponse.messageId,
         deliveredAt: new Date(),
         userId: user.id,
         commitId,
@@ -99,7 +99,7 @@ export async function sendFeedback(data: SendFeedbackData) {
 
     return {
       sent: true,
-      messageTs: slackResponse.ts,
+      messageId: discordResponse.messageId,
     };
   } catch (error) {
     console.error('Error sending feedback:', error);
@@ -107,48 +107,46 @@ export async function sendFeedback(data: SendFeedbackData) {
   }
 }
 
-async function sendSlackDM(
+async function sendDiscordDM(
   userId: string,
   message: string
-): Promise<{ channel: string; ts: string }> {
-  // Open DM channel
-  const openResponse = await fetch('https://slack.com/api/conversations.open', {
+): Promise<{ channelId: string; messageId: string }> {
+  // Create DM channel with user
+  const dmChannelResponse = await fetch('https://discord.com/api/v10/users/@me/channels', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${SLACK_BOT_TOKEN}`,
+      'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ users: userId }),
+    body: JSON.stringify({ recipient_id: userId }),
   });
 
-  const openData = await openResponse.json();
-  if (!openData.ok) {
-    throw new Error(`Failed to open DM: ${openData.error}`);
+  const dmChannel = await dmChannelResponse.json();
+  if (dmChannel.code) {
+    throw new Error(`Failed to create DM channel: ${dmChannel.message}`);
   }
 
-  const channelId = openData.channel.id;
+  const channelId = dmChannel.id;
 
-  // Send message
-  const messageResponse = await fetch('https://slack.com/api/chat.postMessage', {
+  // Send message to DM channel
+  const messageResponse = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${SLACK_BOT_TOKEN}`,
+      'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      channel: channelId,
-      text: message,
-      unfurl_links: false,
+      content: message,
     }),
   });
 
   const messageData = await messageResponse.json();
-  if (!messageData.ok) {
-    throw new Error(`Failed to send message: ${messageData.error}`);
+  if (messageData.code) {
+    throw new Error(`Failed to send message: ${messageData.message}`);
   }
 
   return {
-    channel: channelId,
-    ts: messageData.ts,
+    channelId,
+    messageId: messageData.id,
   };
 }

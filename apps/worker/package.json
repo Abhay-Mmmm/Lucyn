@@ -15,6 +15,7 @@
     "@lucyn/database": "*",
     "@lucyn/shared": "*",
     "bullmq": "^5.0.0",
+    "dotenv": "^16.3.1",
     "ioredis": "^5.3.2",
     "octokit": "^3.1.2"
   },

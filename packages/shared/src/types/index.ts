@@ -203,44 +203,67 @@ export interface GitHubCommitPayload {
 }
 
 // ============================================
-// Slack Types
+// Discord Types
 // ============================================
 
-export interface SlackEventPayload {
-  type: string;
-  challenge?: string;
-  event?: {
-    type: string;
-    user?: string;
-    channel?: string;
-    text?: string;
-    ts?: string;
+export interface DiscordInteraction {
+  type: number; // 1 = PING, 2 = APPLICATION_COMMAND, 3 = MESSAGE_COMPONENT
+  id: string;
+  application_id: string;
+  guild_id?: string;
+  channel_id?: string;
+  member?: {
+    user: {
+      id: string;
+      username: string;
+      discriminator: string;
+    };
+    roles: string[];
+  };
+  data?: {
+    name: string;
+    type: number;
+    options?: DiscordCommandOption[];
   };
 }
 
-export interface SlackMessage {
-  channel: string;
-  text?: string;
-  blocks?: SlackBlock[];
-  thread_ts?: string;
+export interface DiscordCommandOption {
+  name: string;
+  type: number;
+  value?: string | number | boolean;
 }
 
-export interface SlackBlock {
-  type: string;
-  text?: {
-    type: string;
+export interface DiscordMessage {
+  content?: string;
+  embeds?: DiscordEmbed[];
+  components?: DiscordComponent[];
+  flags?: number;
+}
+
+export interface DiscordEmbed {
+  title?: string;
+  description?: string;
+  color?: number;
+  fields?: Array<{
+    name: string;
+    value: string;
+    inline?: boolean;
+  }>;
+  footer?: {
     text: string;
-    emoji?: boolean;
+    icon_url?: string;
   };
-  elements?: SlackBlockElement[];
+  timestamp?: string;
 }
 
-export interface SlackBlockElement {
-  type: string;
-  text?: {
-    type: string;
-    text: string;
-  };
-  action_id?: string;
-  value?: string;
+export interface DiscordComponent {
+  type: number; // 1 = ACTION_ROW
+  components?: Array<{
+    type: number; // 2 = BUTTON, 3 = SELECT_MENU
+    style?: number;
+    label?: string;
+    custom_id?: string;
+    url?: string;
+    disabled?: boolean;
+  }>;
 }

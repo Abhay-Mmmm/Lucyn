@@ -253,7 +253,7 @@ export interface TaskAssignmentResult {
 }
 
 // ============================================
-// Slack Feedback Prompts
+// Discord Feedback Prompts
 // ============================================
 
 export function createCommitTipPrompt(
@@ -262,7 +262,7 @@ export function createCommitTipPrompt(
   suggestions: string[]
 ): string {
   return `
-Generate a friendly, helpful Slack message for a developer about their commit.
+Generate a friendly, helpful Discord message for a developer about their commit.
 
 Developer: ${developerName}
 Commit Message: ${commitMessage}
@@ -285,7 +285,7 @@ export function createPRTipPrompt(
   suggestions: string[]
 ): string {
   return `
-Generate a friendly Slack message for a developer about their pull request.
+Generate a friendly Discord message for a developer about their pull request.
 
 Developer: ${developerName}
 PR Title: ${prTitle}
@@ -308,7 +308,7 @@ export function createAchievementPrompt(
   stats: Record<string, number>
 ): string {
   return `
-Generate a celebratory Slack message for a developer's achievement.
+Generate a celebratory Discord message for a developer's achievement.
 
 Developer: ${developerName}
 Achievement: ${achievement}

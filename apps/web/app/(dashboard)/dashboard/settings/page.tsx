@@ -54,7 +54,7 @@ export default function SettingsPage() {
           />
           <IntegrationRow
             icon={<MessageSquare className="w-5 h-5" />}
-            name="Slack"
+            name="Discord"
             description="Enable developer feedback and notifications"
             isConnected={false}
           />

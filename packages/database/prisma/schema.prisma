@@ -88,8 +88,8 @@ model Organization {
   logoUrl        String?
   githubOrgId    String?  @unique
   githubOrgLogin String?
-  slackTeamId    String?  @unique
-  slackTeamName  String?
+  discordGuildId   String?  @unique
+  discordGuildName String?
   settings       Json     @default("{}")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -113,8 +113,8 @@ model User {
   role              Role      @default(MEMBER)
   githubId          String?   @unique
   githubUsername    String?
-  slackId           String?
-  slackUsername     String?
+  discordId         String?
+  discordUsername   String?
   feedbackEnabled   Boolean   @default(true)
   feedbackFrequency String    @default("daily")
   timezone          String    @default("UTC")
@@ -132,7 +132,7 @@ model User {
   profile          DeveloperProfile?
   assignedTasks    Task[]             @relation("TaskAssignee")
   suggestedTasks   Task[]             @relation("TaskSuggested")
-  slackFeedback    SlackFeedback[]
+  discordFeedback  DiscordFeedback[]
 
   @@index([organizationId])
   @@index([githubUsername])
@@ -188,7 +188,7 @@ model Commit {
   author       User?      @relation(fields: [authorId], references: [id])
   authorId     String?
 
-  slackFeedback SlackFeedback[]
+  discordFeedback DiscordFeedback[]
 
   @@index([repositoryId])
   @@index([authorId])
@@ -227,7 +227,7 @@ model PullRequest {
   authorId     String?
   reviewers    User[]     @relation("PRReviewers")
 
-  slackFeedback SlackFeedback[]
+  discordFeedback DiscordFeedback[]
 
   @@index([repositoryId])
   @@index([authorId])
@@ -329,15 +329,15 @@ model Task {
 }
 
 // ============================================
-// SLACK INTEGRATION
+// DISCORD INTEGRATION
 // ============================================
 
-model SlackFeedback {
+model DiscordFeedback {
   id             String       @id @default(cuid())
   type           FeedbackType
   message        String
   channelId      String?
-  messageTs      String?
+  messageId      String?
   wasHelpful     Boolean?
   userResponse   String?
   deliveredAt    DateTime?
@@ -352,7 +352,7 @@ model SlackFeedback {
   pullRequestId String?
 
   @@index([userId])
-  @@map("slack_feedback")
+  @@map("discord_feedback")
 }
 
 // ============================================

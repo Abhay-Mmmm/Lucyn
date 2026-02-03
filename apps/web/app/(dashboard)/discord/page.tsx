@@ -86,7 +86,7 @@ function getTypeBadge(type: string) {
   }
 }
 
-export default function SlackPage() {
+export default function DiscordPage() {
   const [isConnected, setIsConnected] = useState(true);
   const [settings, setSettings] = useState({
     feedbackChannel: '#engineering',
@@ -99,9 +99,9 @@ export default function SlackPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Slack Integration</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Discord Integration</h1>
         <p className="text-muted-foreground">
-          Configure how Lucyn interacts with your team through Slack
+          Configure how Lucyn interacts with your team through Discord
         </p>
       </div>
 
@@ -110,7 +110,7 @@ export default function SlackPage() {
         <Card>
           <CardHeader>
             <CardTitle>Connection Status</CardTitle>
-            <CardDescription>Manage your Slack workspace connection</CardDescription>
+            <CardDescription>Manage your Discord server connection</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -121,17 +121,17 @@ export default function SlackPage() {
                   }`}
                 />
                 <span className="font-medium">
-                  {isConnected ? 'Connected to workspace' : 'Not connected'}
+                  {isConnected ? 'Connected to server' : 'Not connected'}
                 </span>
               </div>
               <Button variant={isConnected ? 'outline' : 'default'}>
-                {isConnected ? 'Disconnect' : 'Connect Slack'}
+                {isConnected ? 'Disconnect' : 'Connect Discord'}
               </Button>
             </div>
             {isConnected && (
               <div className="text-sm text-muted-foreground">
-                <p>Workspace: Acme Corp</p>
-                <p>Bot name: @lucyn</p>
+                <p>Server: Acme Corp</p>
+                <p>Bot name: Lucyn</p>
                 <p>Members synced: 12</p>
               </div>
             )}

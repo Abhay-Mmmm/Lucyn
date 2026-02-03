@@ -71,7 +71,7 @@ export async function suggestTaskAssignment(input: TaskAssignmentInput): Promise
 }
 
 // ============================================
-// Slack Feedback Chains
+// Discord Feedback Chains
 // ============================================
 
 export async function generateCommitTip(

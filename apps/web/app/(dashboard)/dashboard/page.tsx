@@ -44,8 +44,8 @@ const mockInsights = [
     id: '3',
     type: 'recommendation',
     severity: 'info',
-    title: 'Connect Slack for better insights',
-    description: 'Enable Slack integration to provide personalized developer feedback.',
+    title: 'Connect Discord for better insights',
+    description: 'Enable Discord integration to provide personalized developer feedback.',
   },
 ];
 

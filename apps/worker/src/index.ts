@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { Worker, Queue } from 'bullmq';
 import { connection } from './queues/connection';
 import { processCommit } from './jobs/github/processCommit';
@@ -5,7 +6,7 @@ import { processPullRequest } from './jobs/github/processPullRequest';
 import { syncRepository } from './jobs/github/syncRepository';
 import { computeMetrics } from './jobs/analytics/computeMetrics';
 import { generateInsights } from './jobs/analytics/generateInsights';
-import { sendFeedback } from './jobs/slack/sendFeedback';
+import { sendFeedback } from './jobs/discord/sendFeedback';
 
 console.log('🚀 Lucyn Worker starting...');
 
@@ -29,10 +30,10 @@ async function startWorkers() {
   // Define queues
   const githubQueue = new Queue('github', { connection });
   const analyticsQueue = new Queue('analytics', { connection });
-  const slackQueue = new Queue('slack', { connection });
+  const discordQueue = new Queue('discord', { connection });
 
   // Export for external use
-  (global as any).lucynQueues = { githubQueue, analyticsQueue, slackQueue };
+  (global as any).lucynQueues = { githubQueue, analyticsQueue, discordQueue };
 
   // GitHub Worker
   const githubWorker = new Worker(
@@ -78,17 +79,17 @@ async function startWorkers() {
     }
   );
 
-  // Slack Worker
-  const slackWorker = new Worker(
-    'slack',
+  // Discord Worker
+  const discordWorker = new Worker(
+    'discord',
     async (job) => {
-      console.log(`Processing Slack job: ${job.name} (${job.id})`);
+      console.log(`Processing Discord job: ${job.name} (${job.id})`);
 
       switch (job.name) {
         case 'send-feedback':
           return sendFeedback(job.data);
         default:
-          console.log(`Unknown Slack job type: ${job.name}`);
+          console.log(`Unknown Discord job type: ${job.name}`);
       }
     },
     {
@@ -98,7 +99,7 @@ async function startWorkers() {
   );
 
   // Event handlers
-  const workers = [githubWorker, analyticsWorker, slackWorker];
+  const workers = [githubWorker, analyticsWorker, discordWorker];
 
   workers.forEach((worker) => {
     worker.on('completed', (job) => {
@@ -124,7 +125,7 @@ async function startWorkers() {
   process.on('SIGTERM', shutdown);
 
   console.log('✅ Lucyn Worker running');
-  console.log('📋 Queues: github, analytics, slack');
+  console.log('📋 Queues: github, analytics, discord');
 }
 
 // Start the workers

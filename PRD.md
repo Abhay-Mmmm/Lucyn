@@ -11,7 +11,7 @@
 Modern software companies suffer from a major visibility and coordination gap between leadership, product planning, and day to day engineering execution.
 
 - CEOs and founders lack real time, objective insight into engineering productivity and team health.
-- Engineering metrics are fragmented across tools such as GitHub, Jira, Slack, and meetings.
+- Engineering metrics are fragmented across tools such as GitHub, Jira, Discord, and meetings.
 - Task assignment is manual, biased, and often misaligned with individual strengths.
 - Code quality feedback is reactive instead of continuous.
 - SCRUM meetings generate insights that are lost immediately after the call.
@@ -75,7 +75,7 @@ Continuously ingests and analyzes engineering activity.
 
 ---
 
-### 5.2 Developer Guidance Agent (Slack Integration)
+### 5.2 Developer Guidance Agent (Discord Integration)
 
 **Description:**  
 An AI that communicates directly with developers.
@@ -168,7 +168,7 @@ High level, non technical visibility into engineering execution.
 - LLM based Reasoning Engine  
 - Behavior and Skill Modeling Engine  
 - Task Orchestration Engine  
-- Conversation Agents for Slack and Meet  
+- Conversation Agents for Discord and Meet  
 
 ### AI Principles
 - Explainable decisions  
@@ -201,7 +201,7 @@ High level, non technical visibility into engineering execution.
 - Developer satisfaction score  
 
 ### Adoption Metrics
-- Slack interaction rate  
+- Discord interaction rate  
 - Meeting participation usage  
 - Task reassignment acceptance rate  
 
@@ -211,7 +211,7 @@ High level, non technical visibility into engineering execution.
 
 ### Must Have
 - GitHub ingestion  
-- Slack feedback agent  
+- Discord feedback agent  
 - Basic CEO dashboard  
 - Manual task assignment suggestions  
 

@@ -53,7 +53,7 @@ export const organizationSettingsSchema = z.object({
   logoUrl: z.string().url().optional(),
   settings: z.object({
     features: z.object({
-      slackIntegration: z.boolean().optional(),
+      discordIntegration: z.boolean().optional(),
       githubIntegration: z.boolean().optional(),
       meetingIntegration: z.boolean().optional(),
     }).optional(),
@@ -99,15 +99,16 @@ export const githubWebhookSchema = z.object({
   }).optional(),
 });
 
-export const slackEventSchema = z.object({
-  type: z.string(),
-  challenge: z.string().optional(),
-  event: z.object({
-    type: z.string(),
-    user: z.string().optional(),
-    channel: z.string().optional(),
-    text: z.string().optional(),
-    ts: z.string().optional(),
+export const discordEventSchema = z.object({
+  type: z.number(), // Discord interaction type
+  id: z.string(),
+  application_id: z.string(),
+  guild_id: z.string().optional(),
+  channel_id: z.string().optional(),
+  data: z.object({
+    name: z.string().optional(),
+    type: z.number().optional(),
+    options: z.array(z.any()).optional(),
   }).optional(),
 });
 

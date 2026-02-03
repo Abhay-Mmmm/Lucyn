@@ -15,7 +15,7 @@ async function main() {
       domain: 'demo.lucyn.dev',
       settings: {
         features: {
-          slackIntegration: true,
+          discordIntegration: true,
           githubIntegration: true,
           meetingIntegration: false,
         },
@@ -77,7 +77,7 @@ async function main() {
       type: 'VELOCITY',
       severity: 'INFO',
       title: 'Welcome to Lucyn!',
-      description: 'Your AI Product Engineer is ready to help. Connect your GitHub and Slack to get started.',
+      description: 'Your AI Product Engineer is ready to help. Connect your GitHub and Discord to get started.',
       recommendation: 'Visit Settings to connect your integrations.',
     },
   });
