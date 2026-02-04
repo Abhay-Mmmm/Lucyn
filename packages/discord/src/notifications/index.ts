@@ -1,4 +1,4 @@
-import { Client, TextChannel, EmbedBuilder } from 'discord.js';
+import { Client, EmbedBuilder, ChannelType } from 'discord.js';
 
 // Store the channel ID for notifications (set via command or config)
 let notificationChannelId: string | null = null;
@@ -27,8 +27,10 @@ export async function sendNotification(
   try {
     const channel = await client.channels.fetch(targetChannelId);
     
-    if (!channel || !(channel instanceof TextChannel)) {
-      console.error('Invalid notification channel');
+    // Use type guard to check if channel supports text-based messaging
+    // This allows TextChannel, NewsChannel, ThreadChannel, etc.
+    if (!channel || !channel.isTextBased()) {
+      console.error('Invalid notification channel: channel is not text-based');
       return false;
     }
 

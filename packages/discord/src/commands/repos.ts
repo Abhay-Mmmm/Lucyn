@@ -85,7 +85,13 @@ export const reposCommand: Command = {
       .setTitle('📁 Connected Repositories')
       .setDescription(`**${repos.length} repositories** connected to Lucyn`);
 
-    for (const repo of repos) {
+    // Discord embeds have a maximum of 25 fields
+    // Reserve 1 field for "and X more" message if needed
+    const MAX_FIELDS = 24;
+    const displayRepos = repos.slice(0, MAX_FIELDS);
+    const omittedCount = repos.length - displayRepos.length;
+
+    for (const repo of displayRepos) {
       const statusEmoji = repo.status === 'healthy' ? '🟢' : '🟡';
       const coverageText = repo.coverage !== null 
         ? `${repo.coverage}% coverage` 
@@ -111,8 +117,19 @@ export const reposCommand: Command = {
       });
     }
 
+    // Add summary field if repos were omitted
+    if (omittedCount > 0) {
+      embed.addFields({
+        name: '📊 More Repositories',
+        value: `**+${omittedCount} more** repositories not shown.\nUse \`/repos name:<filter>\` to search, or view all in the [Lucyn Dashboard](${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/repositories).`,
+        inline: false,
+      });
+    }
+
     embed.setFooter({
-      text: 'Tip: Add more repos from the Lucyn dashboard',
+      text: omittedCount > 0 
+        ? `Showing ${displayRepos.length} of ${repos.length} repos • Use filters to narrow results`
+        : 'Tip: Add more repos from the Lucyn dashboard',
     });
     embed.setTimestamp();
 

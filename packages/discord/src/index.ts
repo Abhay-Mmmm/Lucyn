@@ -122,5 +122,8 @@ process.on('SIGTERM', () => {
 // Export for external use
 export { client, start };
 
-// Auto-start if run directly
-start();
+// Auto-start only when run directly as entrypoint (not when imported)
+// ESM-safe check: compare the file URL of this module with the main entry point
+if (import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`) {
+  start();
+}
