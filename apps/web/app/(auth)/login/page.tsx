@@ -53,10 +53,10 @@ export default function LoginPage() {
     }
   };
 
-  const handleSlackLogin = async () => {
+  const handleGoogleLogin = async () => {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'slack',
+      provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -94,8 +94,8 @@ export default function LoginPage() {
             loading={loading}
           />
           <OAuthButton
-            provider="slack"
-            onClick={handleSlackLogin}
+            provider="google"
+            onClick={handleGoogleLogin}
             loading={loading}
           />
         </div>

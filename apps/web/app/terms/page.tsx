@@ -136,7 +136,7 @@ export default function TermsPage() {
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">8. Third-Party Integrations</h2>
               <p className="text-muted-foreground leading-relaxed">
-                The Service may contain links to third-party websites or services (such as GitHub, Discord, Slack) that are 
+                The Service may contain links to third-party websites or services (such as GitHub, Discord, Google) that are 
                 not owned or controlled by Lucyn. We have no control over, and assume no responsibility for, the content, 
                 privacy policies, or practices of any third-party services.
               </p>

@@ -77,12 +77,12 @@ export default function PrivacyPage() {
 
               <h3 className="text-xl font-semibold text-foreground mt-6">2.3 Information from Third-Party Services</h3>
               <p className="text-muted-foreground leading-relaxed">
-                When you connect third-party services (GitHub, Discord, Slack), we collect:
+                When you connect third-party services (GitHub, Discord, Google), we collect:
               </p>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
                 <li><strong className="text-foreground">GitHub:</strong> Repository data, commit history, pull requests, code reviews, contributor information</li>
                 <li><strong className="text-foreground">Discord:</strong> Server information, channel data, user messages (with consent), bot interactions</li>
-                <li><strong className="text-foreground">Slack:</strong> Workspace data, channel messages, user profiles, integration events</li>
+                <li><strong className="text-foreground">Google:</strong> Profile information, email address, calendar data (with consent), authentication tokens</li>
               </ul>
             </section>
 
