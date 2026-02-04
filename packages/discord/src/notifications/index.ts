@@ -121,12 +121,12 @@ export function buildCommitPushNotification(data: {
   repository: string;
   branch: string;
   pusher: string;
-  commits: Array<{ sha: string; message: string; author: string }>;
+  commits: Array<{ sha: string; message: string; author: string; url: string }>;
   compareUrl: string;
 }): EmbedBuilder {
   const commitList = data.commits
     .slice(0, 5)
-    .map(c => `• [\`${c.sha.slice(0, 7)}\`](${data.compareUrl}) ${c.message.split('\n')[0].slice(0, 50)}`)
+    .map(c => `• [\`${c.sha.slice(0, 7)}\`](${c.url}) ${c.message.split('\n')[0].slice(0, 50)}`)
     .join('\n');
 
   const moreCommits = data.commits.length > 5 
