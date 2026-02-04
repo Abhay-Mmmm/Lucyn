@@ -1,5 +1,15 @@
 import { TIME } from '../constants';
 
+// Re-export encryption utilities
+export {
+  encryptToken,
+  decryptToken,
+  generateEncryptionKey,
+  isEncryptionConfigured,
+  safeEncryptToken,
+  safeDecryptToken,
+} from './encryption';
+
 /**
  * Format a date relative to now (e.g., "2 hours ago")
  */

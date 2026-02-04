@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,17 @@ import { Input } from '@/components/ui/input';
 import { AuthLayout } from '@/components/auth/auth-layout';
 import { OAuthButton } from '@/components/auth/oauth-button';
 import { createClient } from '@/lib/supabase/client';
+
+// Password validation helper
+function validatePassword(password: string) {
+  return {
+    minLength: password.length >= 8,
+    hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+    hasSpecial: /[^A-Za-z0-9]/.test(password),
+  };
+}
 
 export default function SignupPage() {
   const router = useRouter();
@@ -19,30 +30,43 @@ export default function SignupPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Real-time password validation
+  const passwordValidation = useMemo(() => validatePassword(password), [password]);
+  const isPasswordValid = Object.values(passwordValidation).every(Boolean);
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name,
-          organization_name: orgName,
-        },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-
-    if (error) {
-      setError(error.message);
+    // Client-side validation
+    if (!isPasswordValid) {
+      setError('Please meet all password requirements');
       setLoading(false);
       return;
     }
 
-    router.push('/login?message=Check your email to confirm your account');
+    try {
+      // Call our API which validates and creates user in DB
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name, organizationName: orgName }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.details?.join(', ') || data.error || 'Signup failed');
+        setLoading(false);
+        return;
+      }
+
+      router.push('/login?message=Check your email to confirm your account');
+    } catch (err) {
+      setError('Something went wrong. Please try again.');
+      setLoading(false);
+    }
   };
 
   const handleGitHubSignup = async () => {
@@ -165,15 +189,34 @@ export default function SignupPage() {
             <Input
               id="password"
               type="password"
-              placeholder="At least 8 characters"
+              placeholder="Create a strong password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={8}
               disabled={loading}
             />
+            {/* Password requirements */}
+            {password && (
+              <div className="text-xs space-y-1 mt-2">
+                <p className={passwordValidation.minLength ? 'text-green-600' : 'text-muted-foreground'}>
+                  {passwordValidation.minLength ? '✓' : '○'} At least 8 characters
+                </p>
+                <p className={passwordValidation.hasUppercase ? 'text-green-600' : 'text-muted-foreground'}>
+                  {passwordValidation.hasUppercase ? '✓' : '○'} One uppercase letter
+                </p>
+                <p className={passwordValidation.hasLowercase ? 'text-green-600' : 'text-muted-foreground'}>
+                  {passwordValidation.hasLowercase ? '✓' : '○'} One lowercase letter
+                </p>
+                <p className={passwordValidation.hasNumber ? 'text-green-600' : 'text-muted-foreground'}>
+                  {passwordValidation.hasNumber ? '✓' : '○'} One number
+                </p>
+                <p className={passwordValidation.hasSpecial ? 'text-green-600' : 'text-muted-foreground'}>
+                  {passwordValidation.hasSpecial ? '✓' : '○'} One special character (!@#$%^&*)
+                </p>
+              </div>
+            )}
           </div>
-          <Button type="submit" className="w-full" size="lg" disabled={loading}>
+          <Button type="submit" className="w-full" size="lg" disabled={loading || !isPasswordValid}>
             {loading ? 'Creating account...' : 'Create account'}
           </Button>
         </form>

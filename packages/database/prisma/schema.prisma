@@ -76,6 +76,19 @@ enum BurnoutRisk {
   HIGH
 }
 
+enum AuthProviderType {
+  GITHUB
+  GOOGLE
+  DISCORD
+}
+
+enum IntegrationProvider {
+  GITHUB
+  DISCORD
+  LINEAR
+  JIRA
+}
+
 // ============================================
 // CORE MODELS
 // ============================================
@@ -133,11 +146,60 @@ model User {
   assignedTasks    Task[]             @relation("TaskAssignee")
   suggestedTasks   Task[]             @relation("TaskSuggested")
   discordFeedback  DiscordFeedback[]
+  authProviders    AuthProvider[]
+  integrations     Integration[]
 
   @@index([organizationId])
   @@index([githubUsername])
   @@index([email])
   @@map("users")
+}
+
+// ============================================
+// AUTHENTICATION
+// ============================================
+
+model AuthProvider {
+  id             String           @id @default(cuid())
+  provider       AuthProviderType
+  providerUserId String
+  email          String?
+  accessToken    String?          // Encrypted - for OAuth refresh
+  refreshToken   String?          // Encrypted
+  expiresAt      DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@map("auth_providers")
+}
+
+model Integration {
+  id           String              @id @default(cuid())
+  provider     IntegrationProvider
+  accessToken  String              // Encrypted
+  refreshToken String?             // Encrypted
+  scopes       String[]
+  expiresAt    DateTime?
+  metadata     Json?               // Provider-specific data (e.g., installation_id)
+  isActive     Boolean             @default(true)
+  lastUsedAt   DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider])
+  @@map("integrations")
 }
 
 model Repository {
