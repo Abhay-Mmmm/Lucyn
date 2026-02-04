@@ -1,4 +1,4 @@
-import { Client, EmbedBuilder, ChannelType } from 'discord.js';
+import { Client, EmbedBuilder } from 'discord.js';
 
 // Store the channel ID for notifications (set via command or config)
 let notificationChannelId: string | null = null;
