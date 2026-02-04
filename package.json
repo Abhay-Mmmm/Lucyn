@@ -12,6 +12,8 @@
     "db:migrate": "turbo run db:migrate --filter=@lucyn/database",
     "db:push": "turbo run db:push --filter=@lucyn/database",
     "db:seed": "turbo run db:seed --filter=@lucyn/database",
+    "discord:dev": "npm run dev --workspace=@lucyn/discord",
+    "discord:start": "npm run start --workspace=@lucyn/discord",
     "clean": "turbo run clean && rimraf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
   },

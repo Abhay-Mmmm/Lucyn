@@ -1,0 +1,27 @@
+{
+  "name": "@lucyn/discord",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "lint": "eslint .",
+    "clean": "rimraf node_modules .turbo dist"
+  },
+  "dependencies": {
+    "@lucyn/ai": "*",
+    "@lucyn/database": "*",
+    "@lucyn/shared": "*",
+    "discord.js": "^14.14.1",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "rimraf": "^5.0.5",
+    "tsx": "^4.6.0",
+    "typescript": "^5.3.0"
+  }
+}
