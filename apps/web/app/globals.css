@@ -2,13 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Milanesa Serif Regular - Custom Font */
+/* Milanesa Serif Regular - Display Font for Headings */
 @font-face {
   font-family: 'Milanesa Serif';
   src: url('/fonts/Milaness.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
-  font-display: block; /* Prevents FOUT by blocking until font loads */
+  font-display: block;
+}
+
+/* Grenda - Main UI Font */
+@font-face {
+  font-family: 'Grenda';
+  src: url('/fonts/grenda.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
 @layer base {
@@ -109,20 +118,20 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    font-family: 'Milanesa Serif' !important;
+    font-family: 'Grenda', system-ui, sans-serif;
   }
   
   body {
     @apply bg-background text-foreground;
-    font-family: 'Milanesa Serif' !important;
+    font-family: 'Grenda', system-ui, sans-serif;
     font-weight: 400;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   
-  /* Force Milanesa Serif on all elements */
+  /* Use Grenda for all UI elements by default */
   *, *::before, *::after {
-    font-family: 'Milanesa Serif' !important;
+    font-family: inherit;
   }
   
   /* Focus styles */
