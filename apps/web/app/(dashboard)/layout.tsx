@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@/lib/supabase/server';
-import { DashboardNav } from '@/components/dashboard/nav';
-import { DashboardHeader } from '@/components/dashboard/header';
+import { Sidebar } from '@/components/layout/sidebar';
+import { TopNav } from '@/components/layout/top-nav';
 
 export default async function DashboardLayout({
   children,
@@ -15,12 +15,20 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
+  const user = {
+    name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+    email: session.user.email || '',
+    avatar: session.user.user_metadata?.avatar_url,
+  };
+
   return (
-    <div className="min-h-screen bg-muted/30">
-      <DashboardHeader user={session.user} />
-      <div className="flex">
-        <DashboardNav />
-        <main className="flex-1 p-6">{children}</main>
+    <div className="min-h-screen bg-background">
+      <Sidebar />
+      <div className="pl-64 transition-all duration-300">
+        <TopNav user={user} />
+        <main className="min-h-[calc(100vh-4rem)] p-6">
+          {children}
+        </main>
       </div>
     </div>
   );

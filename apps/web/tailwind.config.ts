@@ -17,6 +17,12 @@ const config: Config = {
       },
     },
     extend: {
+      fontFamily: {
+        serif: ["'Milanesa Serif'"],
+        display: ["'Milanesa Serif'"],
+        mono: ["'Milanesa Serif'"],
+        sans: ["'Milanesa Serif'"],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

@@ -4,9 +4,18 @@ import { z } from 'zod';
 // Auth Validators
 // ============================================
 
+// Password must have: 8+ chars, uppercase, lowercase, number, special char
+export const passwordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number')
+  .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
+
 export const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: passwordSchema,
   name: z.string().min(2, 'Name must be at least 2 characters'),
   organizationName: z.string().min(2, 'Organization name must be at least 2 characters'),
 });
@@ -15,6 +24,29 @@ export const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
 });
+
+// Helper to validate password and return all errors
+export function validatePassword(password: string): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  if (password.length < 8) {
+    errors.push('At least 8 characters');
+  }
+  if (!/[A-Z]/.test(password)) {
+    errors.push('One uppercase letter');
+  }
+  if (!/[a-z]/.test(password)) {
+    errors.push('One lowercase letter');
+  }
+  if (!/[0-9]/.test(password)) {
+    errors.push('One number');
+  }
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    errors.push('One special character (!@#$%^&*)');
+  }
+  
+  return { valid: errors.length === 0, errors };
+}
 
 // ============================================
 // Task Validators

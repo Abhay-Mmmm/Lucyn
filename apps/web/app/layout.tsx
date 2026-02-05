@@ -1,9 +1,6 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Lucyn - AI Product Engineer',
@@ -17,7 +14,24 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <head>
+        {/* Critical CSS inlined to prevent FOUT - font is set before any content renders */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          @font-face {
+            font-family: 'Milanesa Serif';
+            src: url('/fonts/Milaness.otf') format('opentype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: block;
+          }
+          html, body, * {
+            font-family: 'Milanesa Serif' !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+          }
+        ` }} />
+      </head>
+      <body className="font-serif antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

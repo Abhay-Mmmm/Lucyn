@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { prisma } from '@/lib/prisma';
+import { encryptToken } from '@lucyn/shared';
 
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || '';
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || '';
@@ -13,10 +15,33 @@ export async function GET(request: Request) {
   const setupAction = searchParams.get('setup_action');
 
   if (!code) {
-    return NextResponse.redirect(new URL('/dashboard/settings?error=no_code', request.url));
+    return NextResponse.redirect(new URL('/dashboard?error=no_code', request.url));
   }
 
+  // CSRF protection: validate state parameter against stored cookie
+  const cookieStore = cookies();
+  const storedState = cookieStore.get('github_oauth_state')?.value;
+
+  if (!state || !storedState || state !== storedState) {
+    // Clean up the cookie if it exists
+    if (storedState) {
+      cookieStore.delete('github_oauth_state');
+    }
+    return NextResponse.redirect(new URL('/dashboard?error=invalid_state', request.url));
+  }
+
+  // State is valid - delete the cookie to prevent reuse
+  cookieStore.delete('github_oauth_state');
+
   try {
+    // Get the current user from Supabase first
+    const supabase = createRouteHandlerClient({ cookies });
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+
     // Exchange code for access token
     const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
@@ -36,7 +61,7 @@ export async function GET(request: Request) {
     if (tokenData.error) {
       console.error('GitHub OAuth error:', tokenData.error_description);
       return NextResponse.redirect(
-        new URL(`/dashboard/settings?error=${tokenData.error}`, request.url)
+        new URL(`/dashboard?error=${tokenData.error}`, request.url)
       );
     }
 
@@ -50,27 +75,70 @@ export async function GET(request: Request) {
 
     const githubUser = await userResponse.json();
 
-    // Get the current user from Supabase
-    const supabase = createRouteHandlerClient({ cookies });
-    const { data: { session } } = await supabase.auth.getSession();
+    // Encrypt the access token before storing
+    const encryptedToken = encryptToken(tokenData.access_token);
 
-    if (!session) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+    // Store or update the GitHub integration
+    await prisma.integration.upsert({
+      where: {
+        userId_provider: {
+          userId: session.user.id,
+          provider: 'GITHUB',
+        },
+      },
+      update: {
+        accessToken: encryptedToken,
+        refreshToken: tokenData.refresh_token ? encryptToken(tokenData.refresh_token) : null,
+        expiresAt: tokenData.expires_in 
+          ? new Date(Date.now() + tokenData.expires_in * 1000) 
+          : null,
+        scopes: (tokenData.scope || 'repo,user').split(','),
+        metadata: {
+          githubId: githubUser.id,
+          username: githubUser.login,
+          avatarUrl: githubUser.avatar_url,
+          installationId: installationId || null,
+        },
+        updatedAt: new Date(),
+      },
+      create: {
+        userId: session.user.id,
+        provider: 'GITHUB',
+        accessToken: encryptedToken,
+        refreshToken: tokenData.refresh_token ? encryptToken(tokenData.refresh_token) : null,
+        expiresAt: tokenData.expires_in 
+          ? new Date(Date.now() + tokenData.expires_in * 1000) 
+          : null,
+        scopes: (tokenData.scope || 'repo,user').split(','),
+        metadata: {
+          githubId: githubUser.id,
+          username: githubUser.login,
+          avatarUrl: githubUser.avatar_url,
+          installationId: installationId || null,
+        },
+      },
+    });
 
-    // TODO: Store GitHub credentials and link to user
-    console.log('GitHub connected for user:', session.user.email);
-    console.log('GitHub username:', githubUser.login);
-    console.log('Installation ID:', installationId);
+    // Also update the user's GitHub info
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        githubId: String(githubUser.id),
+        githubUsername: githubUser.login,
+        avatarUrl: githubUser.avatar_url,
+      },
+    });
 
-    // Redirect back to settings with success message
+    console.log(`GitHub connected for userId: ${session.user.id} (${githubUser.login})`);
+
+    // Redirect back to dashboard with success message
     return NextResponse.redirect(
-      new URL('/dashboard/settings?github=connected', request.url)
+      new URL('/dashboard?github=connected', request.url)
     );
   } catch (error) {
     console.error('GitHub callback error:', error);
     return NextResponse.redirect(
-      new URL('/dashboard/settings?error=callback_failed', request.url)
+      new URL('/dashboard?error=callback_failed', request.url)
     );
   }
 }
