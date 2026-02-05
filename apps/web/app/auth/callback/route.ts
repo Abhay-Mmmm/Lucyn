@@ -34,9 +34,12 @@ async function syncUserToDatabase(supabaseUser: any) {
       return; // Skip DB sync - user can still access app with Supabase auth
     }
 
+    // Normalize email to lowercase to prevent duplicate accounts from case differences
+    const normalizedEmail = email.trim().toLowerCase();
+
     const name = supabaseUser.user_metadata?.name || 
                  supabaseUser.user_metadata?.full_name ||
-                 email.split('@')[0] || 
+                 normalizedEmail.split('@')[0] || 
                  'User';
     const orgName = supabaseUser.user_metadata?.organization_name || `${name}'s Org`;
 
@@ -56,7 +59,7 @@ async function syncUserToDatabase(supabaseUser: any) {
 
     // Check if user exists by email (could be from email signup)
     const existingByEmail = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (existingByEmail) {
@@ -72,7 +75,7 @@ async function syncUserToDatabase(supabaseUser: any) {
         // or there's a data inconsistency. For safety, we can't update the primary key
         // as it would break foreign key relationships. Log and skip.
         console.error('User ID mismatch during OAuth sync:', {
-          emailHash: email.substring(0, 3) + '***', // Redacted for privacy
+          emailHash: normalizedEmail.substring(0, 3) + '***', // Redacted for privacy
           existingId: existingByEmail.id,
           supabaseId: supabaseUser.id,
         });
@@ -108,7 +111,7 @@ async function syncUserToDatabase(supabaseUser: any) {
       await tx.user.create({
         data: {
           id: supabaseUser.id,
-          email,
+          email: normalizedEmail,
           name,
           organizationId: organization.id,
           role: 'ADMIN',

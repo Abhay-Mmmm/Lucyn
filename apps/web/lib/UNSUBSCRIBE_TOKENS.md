@@ -43,7 +43,7 @@ The endpoint automatically:
 - Updates user preferences
 
 **Request:**
-```
+```http
 POST /api/unsubscribe?token=<base64url-encoded-token>
 ```
 
@@ -62,12 +62,12 @@ POST /api/unsubscribe?token=<base64url-encoded-token>
 5. User sees success or error message
 
 ## Token Format
-```
+```text
 base64url(email|timestamp|hmac-sha256-signature)
 ```
 
 Example (decoded):
-```
+```text
 user@example.com|1738963200000|a1b2c3d4e5f6...
 ```
 

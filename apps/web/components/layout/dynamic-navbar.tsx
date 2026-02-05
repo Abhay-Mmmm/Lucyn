@@ -146,6 +146,7 @@ export function DynamicNavbar() {
 
           {/* Mobile Menu Button */}
           <button
+            type="button"
             className="md:hidden p-2 rounded-full hover:bg-muted/50 transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
