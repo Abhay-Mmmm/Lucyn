@@ -2,15 +2,40 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { AsciiBackground } from '@/components/background';
-import { ArrowRight, Check } from 'lucide-react';
+import { InteractiveBackground } from '@/components/background';
+import { DynamicNavbar } from '@/components/layout';
+import { ArrowRight, Check, Zap, Users, GitBranch, BarChart3, Send } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 
 const features = [
   'Real-time engineering insights',
   'Automated code review feedback',
   'Team velocity tracking',
   'GitHub & Discord integration',
+];
+
+const useCases = [
+  {
+    icon: Users,
+    title: 'Engineering Team Leads',
+    description: 'Get real-time visibility into team performance, identify bottlenecks, and make data-driven decisions to improve velocity without micromanaging.',
+  },
+  {
+    icon: GitBranch,
+    title: 'Code Review Automation',
+    description: 'Automate repetitive code review tasks, catch issues early, and maintain consistent code quality across your entire codebase.',
+  },
+  {
+    icon: BarChart3,
+    title: 'Sprint Analytics',
+    description: 'Track sprint progress, measure team health metrics, and generate comprehensive reports for stakeholders automatically.',
+  },
+  {
+    icon: Zap,
+    title: 'Developer Productivity',
+    description: 'Surface actionable insights to help individual developers improve their workflow and reduce context-switching overhead.',
+  },
 ];
 
 const fadeIn = {
@@ -32,29 +57,29 @@ const cursorPath = [
 ];
 
 export default function Home() {
+  const [formState, setFormState] = useState({ name: '', email: '', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    // Simulate form submission
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsSubmitting(false);
+    setIsSubmitted(true);
+    setFormState({ name: '', email: '', message: '' });
+  };
+
   return (
     <div className="relative min-h-screen">
-      <AsciiBackground />
+      <InteractiveBackground />
       
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border/50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
-            <span className="font-display text-2xl tracking-tight text-foreground">Lucyn.</span>
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">Sign in</Button>
-            </Link>
-            <Link href="/signup">
-              <Button size="sm">Get started</Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
+      {/* Dynamic Navbar */}
+      <DynamicNavbar />
 
       {/* Hero Section */}
-      <main className="relative z-10 pt-32 pb-24">
+      <main id="home" className="relative z-10 pt-32 pb-24">
         <div className="max-w-5xl mx-auto px-6">
           <motion.div
             className="text-center space-y-8"
@@ -98,15 +123,6 @@ export default function Home() {
                   <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
-              <Link href="/login">
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  className="h-14 px-10 text-lg rounded-full border-border/50 hover:bg-muted"
-                >
-                  Sign in
-                </Button>
-              </Link>
             </motion.div>
           </motion.div>
 
@@ -147,7 +163,7 @@ export default function Home() {
                   </div>
                   <div className="flex-1 flex justify-center">
                     <div className="h-6 w-64 rounded-md bg-muted/50 flex items-center justify-center">
-                      <span className="text-[10px] text-muted-foreground font-mono">app.lucyn.dev/dashboard</span>
+                      <span className="text-[10px] text-muted-foreground">app.lucyn.dev/dashboard</span>
                     </div>
                   </div>
                 </div>
@@ -277,8 +293,198 @@ export default function Home() {
         </motion.div>
       </main>
 
+      {/* Use Cases Section */}
+      <section id="use-cases" className="relative z-10 py-32">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <span className="inline-flex items-center rounded-full border border-border/50 px-4 py-1.5 text-sm font-medium text-muted-foreground mb-6">
+              Built for every role
+            </span>
+            <h2 className="text-4xl sm:text-5xl font-display font-semibold tracking-tight mb-6">
+              Use Cases
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Lucyn adapts to your team's workflow, providing tailored insights for everyone from individual contributors to engineering leaders.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {useCases.map((useCase, index) => (
+              <motion.div
+                key={useCase.title}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="group p-8 rounded-2xl border border-border/50 bg-card/50 hover:bg-card hover:border-border transition-all duration-300"
+              >
+                <div className="flex items-start gap-5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-foreground/5 group-hover:bg-foreground/10 transition-colors">
+                    <useCase.icon className="h-6 w-6 text-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      {useCase.title}
+                    </h3>
+                    <p className="text-muted-foreground leading-relaxed">
+                      {useCase.description}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Section */}
+      <section id="contact" className="relative z-10 py-32">
+        <div className="max-w-4xl mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <span className="inline-flex items-center rounded-full border border-border/50 px-4 py-1.5 text-sm font-medium text-muted-foreground mb-6">
+              Get in touch
+            </span>
+            <h2 className="text-4xl sm:text-5xl font-display font-semibold tracking-tight mb-6">
+              Contact Us
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              Have questions about Lucyn? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="grid md:grid-cols-5 gap-12"
+          >
+            {/* Contact Info */}
+            <div className="md:col-span-2 space-y-8">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-3">Email</h3>
+                <a
+                  href="mailto:hello@lucyn.dev"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  hello@lucyn.dev
+                </a>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-3">Support</h3>
+                <a
+                  href="mailto:support@lucyn.dev"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  support@lucyn.dev
+                </a>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-3">Follow us</h3>
+                <div className="flex gap-4">
+                  <a href="https://twitter.com/lucyndev" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Twitter
+                  </a>
+                  <a href="https://github.com/lucyndev" className="text-muted-foreground hover:text-foreground transition-colors">
+                    GitHub
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Form */}
+            <div className="md:col-span-3">
+              {isSubmitted ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-8 rounded-2xl border border-border/50 bg-card/50 text-center"
+                >
+                  <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-full bg-foreground/10 mb-4">
+                    <Check className="h-6 w-6 text-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Message sent!</h3>
+                  <p className="text-muted-foreground">We'll get back to you as soon as possible.</p>
+                </motion.div>
+              ) : (
+                <form onSubmit={handleContactSubmit} className="space-y-5">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      required
+                      value={formState.name}
+                      onChange={(e) => setFormState({ ...formState, name: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-border/50 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:border-foreground/30 transition-all"
+                      placeholder="Your name"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      required
+                      value={formState.email}
+                      onChange={(e) => setFormState({ ...formState, email: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-border/50 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:border-foreground/30 transition-all"
+                      placeholder="you@company.com"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
+                      Message
+                    </label>
+                    <textarea
+                      id="message"
+                      required
+                      rows={4}
+                      value={formState.message}
+                      onChange={(e) => setFormState({ ...formState, message: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-border/50 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:border-foreground/30 transition-all resize-none"
+                      placeholder="How can we help you?"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full h-12 rounded-full bg-foreground text-background hover:bg-foreground/90 gap-2"
+                  >
+                    {isSubmitting ? (
+                      'Sending...'
+                    ) : (
+                      <>
+                        Send message
+                        <Send className="h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="relative z-10 border-t border-border/50 py-12">
+      <footer className="relative z-10 py-12">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <span className="font-display text-lg text-foreground">Lucyn.</span>

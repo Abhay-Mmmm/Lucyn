@@ -2,37 +2,43 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 
-interface Particle {
+interface GridPoint {
   x: number;
   y: number;
-  vx: number;
-  vy: number;
-  size: number;
-  opacity: number;
+  originalX: number;
+  originalY: number;
 }
 
 export function InteractiveBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const particlesRef = useRef<Particle[]>([]);
-  const mouseRef = useRef({ x: 0, y: 0, active: false });
+  const gridRef = useRef<GridPoint[][]>([]);
+  const mouseRef = useRef({ x: -1000, y: -1000 });
   const animationRef = useRef<number>();
 
-  const initParticles = useCallback((width: number, height: number) => {
-    const particleCount = Math.floor((width * height) / 15000);
-    const particles: Particle[] = [];
+  const gridSpacing = 40;
+  const warpRadius = 150;
+  const warpStrength = 25;
 
-    for (let i = 0; i < particleCount; i++) {
-      particles.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        size: Math.random() * 1.5 + 0.5,
-        opacity: Math.random() * 0.3 + 0.1,
-      });
+  const initGrid = useCallback((width: number, height: number) => {
+    const cols = Math.ceil(width / gridSpacing) + 1;
+    const rows = Math.ceil(height / gridSpacing) + 1;
+    const grid: GridPoint[][] = [];
+
+    for (let row = 0; row < rows; row++) {
+      grid[row] = [];
+      for (let col = 0; col < cols; col++) {
+        const x = col * gridSpacing;
+        const y = row * gridSpacing;
+        grid[row][col] = {
+          x,
+          y,
+          originalX: x,
+          originalY: y,
+        };
+      }
     }
 
-    particlesRef.current = particles;
+    gridRef.current = grid;
   }, []);
 
   const animate = useCallback(() => {
@@ -43,64 +49,82 @@ export function InteractiveBackground() {
     if (!ctx) return;
 
     const { width, height } = canvas;
-    const particles = particlesRef.current;
+    const grid = gridRef.current;
     const mouse = mouseRef.current;
 
     ctx.clearRect(0, 0, width, height);
 
-    particles.forEach((particle) => {
-      // Mouse interaction - subtle repulsion
-      if (mouse.active) {
-        const dx = particle.x - mouse.x;
-        const dy = particle.y - mouse.y;
+    // Update grid points based on mouse position
+    for (let row = 0; row < grid.length; row++) {
+      for (let col = 0; col < grid[row].length; col++) {
+        const point = grid[row][col];
+        const dx = point.originalX - mouse.x;
+        const dy = point.originalY - mouse.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const maxDistance = 150;
 
-        if (distance < maxDistance) {
-          const force = (1 - distance / maxDistance) * 0.02;
-          particle.vx += (dx / distance) * force;
-          particle.vy += (dy / distance) * force;
+        if (distance < warpRadius) {
+          // Warp effect - push away from mouse with smooth falloff
+          const factor = Math.pow(1 - distance / warpRadius, 2) * warpStrength;
+          const angle = Math.atan2(dy, dx);
+          point.x = point.originalX + Math.cos(angle) * factor;
+          point.y = point.originalY + Math.sin(angle) * factor;
+        } else {
+          // Smooth return to original position
+          point.x += (point.originalX - point.x) * 0.1;
+          point.y += (point.originalY - point.y) * 0.1;
         }
       }
+    }
 
-      // Update position
-      particle.x += particle.vx;
-      particle.y += particle.vy;
+    // Draw the grid lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+    ctx.lineWidth = 1;
 
-      // Damping
-      particle.vx *= 0.99;
-      particle.vy *= 0.99;
-
-      // Wrap around edges
-      if (particle.x < 0) particle.x = width;
-      if (particle.x > width) particle.x = 0;
-      if (particle.y < 0) particle.y = height;
-      if (particle.y > height) particle.y = 0;
-
-      // Draw particle
+    // Draw horizontal lines
+    for (let row = 0; row < grid.length; row++) {
       ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(0, 0, 0, ${particle.opacity})`;
-      ctx.fill();
-    });
+      for (let col = 0; col < grid[row].length; col++) {
+        const point = grid[row][col];
+        if (col === 0) {
+          ctx.moveTo(point.x, point.y);
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      }
+      ctx.stroke();
+    }
 
-    // Draw subtle connections
-    particles.forEach((p1, i) => {
-      particles.slice(i + 1).forEach((p2) => {
-        const dx = p1.x - p2.x;
-        const dy = p1.y - p2.y;
+    // Draw vertical lines
+    for (let col = 0; col < grid[0].length; col++) {
+      ctx.beginPath();
+      for (let row = 0; row < grid.length; row++) {
+        const point = grid[row][col];
+        if (row === 0) {
+          ctx.moveTo(point.x, point.y);
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      }
+      ctx.stroke();
+    }
+
+    // Draw intersection points with glow near mouse
+    for (let row = 0; row < grid.length; row++) {
+      for (let col = 0; col < grid[row].length; col++) {
+        const point = grid[row][col];
+        const dx = point.x - mouse.x;
+        const dy = point.y - mouse.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < 100) {
+        if (distance < warpRadius * 1.5) {
+          const brightness = Math.max(0.1, 1 - distance / (warpRadius * 1.5));
           ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.strokeStyle = `rgba(0, 0, 0, ${0.03 * (1 - distance / 100)})`;
-          ctx.lineWidth = 0.5;
-          ctx.stroke();
+          ctx.arc(point.x, point.y, 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${brightness * 0.3})`;
+          ctx.fill();
         }
-      });
-    });
+      }
+    }
 
     animationRef.current = requestAnimationFrame(animate);
   }, []);
@@ -112,19 +136,18 @@ export function InteractiveBackground() {
     const handleResize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      initParticles(canvas.width, canvas.height);
+      initGrid(canvas.width, canvas.height);
     };
 
     const handleMouseMove = (e: MouseEvent) => {
       mouseRef.current = {
         x: e.clientX,
         y: e.clientY,
-        active: true,
       };
     };
 
     const handleMouseLeave = () => {
-      mouseRef.current.active = false;
+      mouseRef.current = { x: -1000, y: -1000 };
     };
 
     handleResize();
@@ -142,13 +165,12 @@ export function InteractiveBackground() {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [initParticles, animate]);
+  }, [initGrid, animate]);
 
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none -z-10"
-      style={{ opacity: 0.6 }}
       aria-hidden="true"
     />
   );

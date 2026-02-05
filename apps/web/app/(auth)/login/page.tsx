@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AuthLayout } from '@/components/auth/auth-layout';
-import { OAuthButton } from '@/components/auth/oauth-button';
 import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
@@ -38,36 +37,6 @@ export default function LoginPage() {
     router.push('/dashboard');
   };
 
-  const handleGitHubLogin = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    }
-  };
-
   return (
     <AuthLayout
       title="Welcome back"
@@ -85,31 +54,6 @@ export default function LoginPage() {
             {error}
           </div>
         )}
-
-        {/* OAuth Buttons */}
-        <div className="space-y-3">
-          <OAuthButton
-            provider="github"
-            onClick={handleGitHubLogin}
-            loading={loading}
-          />
-          <OAuthButton
-            provider="google"
-            onClick={handleGoogleLogin}
-            loading={loading}
-          />
-        </div>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">
-              Or continue with email
-            </span>
-          </div>
-        </div>
 
         {/* Email Form */}
         <form onSubmit={handleLogin} className="space-y-4">

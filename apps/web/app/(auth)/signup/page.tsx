@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AuthLayout } from '@/components/auth/auth-layout';
-import { OAuthButton } from '@/components/auth/oauth-button';
-import { createClient } from '@/lib/supabase/client';
 
 // Password validation helper
 function validatePassword(password: string) {
@@ -22,7 +20,6 @@ function validatePassword(password: string) {
 
 export default function SignupPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -69,36 +66,6 @@ export default function SignupPage() {
     }
   };
 
-  const handleGitHubSignup = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignup = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    }
-  };
-
   return (
     <AuthLayout
       title="Start your free trial"
@@ -110,31 +77,6 @@ export default function SignupPage() {
             {error}
           </div>
         )}
-
-        {/* OAuth Buttons */}
-        <div className="space-y-3">
-          <OAuthButton
-            provider="github"
-            onClick={handleGitHubSignup}
-            loading={loading}
-          />
-          <OAuthButton
-            provider="google"
-            onClick={handleGoogleSignup}
-            loading={loading}
-          />
-        </div>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">
-              Or continue with email
-            </span>
-          </div>
-        </div>
 
         {/* Email Form */}
         <form onSubmit={handleSignup} className="space-y-4">
