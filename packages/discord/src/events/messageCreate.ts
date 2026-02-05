@@ -43,10 +43,10 @@ export async function handleMessage(client: Client, message: Message) {
     return;
   }
 
-  // Show typing indicator
-  await message.channel.sendTyping();
-
   try {
+    // Show typing indicator (inside try block to handle permission errors)
+    await message.channel.sendTyping();
+
     // Process the question and generate a response
     const response = await processQuestion(content);
     
@@ -71,11 +71,23 @@ export async function handleMessage(client: Client, message: Message) {
 async function processQuestion(question: string): Promise<string> {
   const lowerQuestion = question.toLowerCase();
 
+  // Feature flag for mock responses - set to false when real data fetching is implemented
+  const useMockData = process.env.DISCORD_USE_MOCK_DATA !== 'false';
+  const mockBanner = useMockData 
+    ? "⚠️ **SAMPLE DATA** — _This is demo data, not real-time metrics._\n\n" 
+    : "";
+
   // Simple pattern matching for common questions
-  // In production, this would use the AI package for real NLP
+  // TODO: In production, replace mock data with real data-fetching functions:
+  // - fetchPROverview() for PR status
+  // - fetchTeamMetrics() for team activity  
+  // - fetchRecentCommits() for commit history
+  // - fetchProjectHealth() for health metrics
   
   if (lowerQuestion.includes('pr') || lowerQuestion.includes('pull request')) {
+    // TODO: Replace with: const prData = await fetchPROverview();
     return (
+      mockBanner +
       "📊 **Pull Request Status**\n\n" +
       "Here's the current PR overview:\n" +
       "• **5** PRs open and awaiting review\n" +
@@ -89,7 +101,9 @@ async function processQuestion(question: string): Promise<string> {
   }
 
   if (lowerQuestion.includes('team') || lowerQuestion.includes('how is everyone')) {
+    // TODO: Replace with: const teamData = await fetchTeamMetrics();
     return (
+      mockBanner +
       "👥 **Team Status**\n\n" +
       "Your team is doing great this week! Here's a summary:\n\n" +
       "🟢 **5/5 team members** active today\n" +
@@ -102,7 +116,9 @@ async function processQuestion(question: string): Promise<string> {
   }
 
   if (lowerQuestion.includes('commit') || lowerQuestion.includes('change')) {
+    // TODO: Replace with: const commits = await fetchRecentCommits();
     return (
+      mockBanner +
       "📝 **Recent Commits**\n\n" +
       "Here are the latest commits:\n\n" +
       "• `abc1234` - Add user authentication middleware\n" +
@@ -115,6 +131,7 @@ async function processQuestion(question: string): Promise<string> {
   }
 
   if (lowerQuestion.includes('help') || lowerQuestion.includes('what can you do')) {
+    // Help response doesn't need mock banner - it's not data-dependent
     return (
       "🤖 **Here's what I can help with:**\n\n" +
       "**Commands:**\n" +
@@ -131,7 +148,9 @@ async function processQuestion(question: string): Promise<string> {
   }
 
   if (lowerQuestion.includes('health') || lowerQuestion.includes('status') || lowerQuestion.includes('how are we doing')) {
+    // TODO: Replace with: const health = await fetchProjectHealth();
     return (
+      mockBanner +
       "📊 **Project Health Overview**\n\n" +
       "🟢 **Health Score: 82/100** - Looking good!\n\n" +
       "**Strengths:**\n" +
@@ -145,7 +164,7 @@ async function processQuestion(question: string): Promise<string> {
     );
   }
 
-  // Default response for unknown questions
+  // Default response for unknown questions - no mock banner needed
   return (
     "🤔 I'm not sure I understood that completely, but here's what I can help with:\n\n" +
     "• **PR status** - Ask about pull requests\n" +

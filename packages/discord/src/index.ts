@@ -1,5 +1,10 @@
 import { config } from 'dotenv';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
+
+// ESM-compatible __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Load environment variables from root .env file
 config({ path: resolve(__dirname, '../../../.env') });
@@ -7,21 +12,6 @@ config({ path: resolve(__dirname, '../../../.env') });
 import { Client, GatewayIntentBits, Events, REST, Routes } from 'discord.js';
 import { commands, handleCommand } from './commands';
 import { handleMessage } from './events/messageCreate';
-
-// Environment variables
-const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
-const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
-const DISCORD_GUILD_ID = process.env.DISCORD_GUILD_ID;
-
-if (!DISCORD_BOT_TOKEN) {
-  console.error('❌ DISCORD_BOT_TOKEN is required');
-  process.exit(1);
-}
-
-if (!DISCORD_CLIENT_ID) {
-  console.error('❌ DISCORD_CLIENT_ID is required');
-  process.exit(1);
-}
 
 // Create Discord client
 const client = new Client({
@@ -34,25 +24,25 @@ const client = new Client({
 });
 
 // Register slash commands
-async function registerCommands() {
-  const rest = new REST({ version: '10' }).setToken(DISCORD_BOT_TOKEN!);
+async function registerCommands(botToken: string, clientId: string, guildId?: string) {
+  const rest = new REST({ version: '10' }).setToken(botToken);
 
   try {
     console.log('🔄 Registering slash commands...');
 
     const commandData = commands.map(cmd => cmd.data.toJSON());
 
-    if (DISCORD_GUILD_ID) {
+    if (guildId) {
       // Register commands for specific guild (faster for development)
       await rest.put(
-        Routes.applicationGuildCommands(DISCORD_CLIENT_ID!, DISCORD_GUILD_ID),
+        Routes.applicationGuildCommands(clientId, guildId),
         { body: commandData }
       );
-      console.log(`✅ Registered ${commandData.length} commands for guild ${DISCORD_GUILD_ID}`);
+      console.log(`✅ Registered ${commandData.length} commands for guild ${guildId}`);
     } else {
       // Register global commands (takes up to 1 hour to propagate)
       await rest.put(
-        Routes.applicationCommands(DISCORD_CLIENT_ID!),
+        Routes.applicationCommands(clientId),
         { body: commandData }
       );
       console.log(`✅ Registered ${commandData.length} global commands`);
@@ -61,6 +51,11 @@ async function registerCommands() {
     console.error('❌ Failed to register commands:', error);
   }
 }
+
+// Store credentials for use in event handlers (set during start())
+let storedBotToken: string;
+let storedClientId: string;
+let storedGuildId: string | undefined;
 
 // Bot ready event
 client.once(Events.ClientReady, async (readyClient) => {
@@ -75,7 +70,7 @@ client.once(Events.ClientReady, async (readyClient) => {
   console.log('');
 
   // Register commands after bot is ready
-  await registerCommands();
+  await registerCommands(storedBotToken, storedClientId, storedGuildId);
 });
 
 // Handle slash commands
@@ -98,8 +93,28 @@ client.on(Events.Error, (error) => {
 async function start() {
   console.log('🚀 Starting Lucyn Discord Bot...');
   
+  // Validate environment variables at startup (not import time)
+  const botToken = process.env.DISCORD_BOT_TOKEN;
+  const clientId = process.env.DISCORD_CLIENT_ID;
+  const guildId = process.env.DISCORD_GUILD_ID;
+
+  if (!botToken) {
+    console.error('❌ DISCORD_BOT_TOKEN is required');
+    process.exit(1);
+  }
+
+  if (!clientId) {
+    console.error('❌ DISCORD_CLIENT_ID is required');
+    process.exit(1);
+  }
+
+  // Store credentials for use in event handlers
+  storedBotToken = botToken;
+  storedClientId = clientId;
+  storedGuildId = guildId;
+  
   try {
-    await client.login(DISCORD_BOT_TOKEN);
+    await client.login(botToken);
   } catch (error) {
     console.error('❌ Failed to login:', error);
     process.exit(1);
@@ -122,5 +137,21 @@ process.on('SIGTERM', () => {
 // Export for external use
 export { client, start };
 
-// Auto-start if run directly
-start();
+// Auto-start only when run directly as entrypoint (not when imported)
+// ESM-safe check: compare the file URL of this module with the normalized entry point URL
+function isMainModule(): boolean {
+  const entryPath = process.argv[1];
+  if (!entryPath) return false;
+  
+  try {
+    // Use pathToFileURL for safe conversion (handles spaces, special chars, etc.)
+    const entryUrl = pathToFileURL(resolve(entryPath)).href;
+    return import.meta.url === entryUrl;
+  } catch {
+    return false;
+  }
+}
+
+if (isMainModule()) {
+  start();
+}

@@ -1,4 +1,4 @@
-import { Client, TextChannel, EmbedBuilder } from 'discord.js';
+import { Client, EmbedBuilder } from 'discord.js';
 
 // Store the channel ID for notifications (set via command or config)
 let notificationChannelId: string | null = null;
@@ -27,8 +27,10 @@ export async function sendNotification(
   try {
     const channel = await client.channels.fetch(targetChannelId);
     
-    if (!channel || !(channel instanceof TextChannel)) {
-      console.error('Invalid notification channel');
+    // Use type guard to check if channel supports text-based messaging
+    // This allows TextChannel, NewsChannel, ThreadChannel, etc.
+    if (!channel || !channel.isTextBased()) {
+      console.error('Invalid notification channel: channel is not text-based');
       return false;
     }
 
@@ -119,12 +121,12 @@ export function buildCommitPushNotification(data: {
   repository: string;
   branch: string;
   pusher: string;
-  commits: Array<{ sha: string; message: string; author: string }>;
+  commits: Array<{ sha: string; message: string; author: string; url: string }>;
   compareUrl: string;
 }): EmbedBuilder {
   const commitList = data.commits
     .slice(0, 5)
-    .map(c => `• [\`${c.sha.slice(0, 7)}\`](${data.compareUrl}) ${c.message.split('\n')[0].slice(0, 50)}`)
+    .map(c => `• [\`${c.sha.slice(0, 7)}\`](${c.url}) ${c.message.split('\n')[0].slice(0, 50)}`)
     .join('\n');
 
   const moreCommits = data.commits.length > 5 
