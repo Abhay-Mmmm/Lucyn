@@ -19,7 +19,7 @@ export default function RootLayout({
         <style dangerouslySetInnerHTML={{ __html: `
           @font-face {
             font-family: 'Milanesa Serif';
-            src: url('/fonts/MilanesaSerif-Regular.woff2') format('woff2');
+            src: url('/fonts/Milaness.otf') format('opentype');
             font-weight: 400;
             font-style: normal;
             font-display: block;

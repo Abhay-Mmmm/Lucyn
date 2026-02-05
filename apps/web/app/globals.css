@@ -5,9 +5,7 @@
 /* Milanesa Serif Regular - Custom Font */
 @font-face {
   font-family: 'Milanesa Serif';
-  src: url('/fonts/MilanesaSerif-Regular.woff2') format('woff2'),
-       url('/fonts/MilanesaSerif-Regular.woff') format('woff'),
-       url('/fonts/MilanesaSerif-Regular.ttf') format('truetype');
+  src: url('/fonts/Milaness.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: block; /* Prevents FOUT by blocking until font loads */
