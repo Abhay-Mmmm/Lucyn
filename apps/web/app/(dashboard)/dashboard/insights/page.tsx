@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -341,7 +341,7 @@ function QuickStatCard({
 }: { 
   label: string; 
   value: string | number;
-  icon: React.ReactNode;
+  icon: ReactNode;
   trend?: string;
   highlight?: boolean;
   positive?: boolean;

@@ -27,6 +27,10 @@ export function DynamicNavbar() {
   const navMarginTop = useTransform(springProgress, [0, 1], [0, 16]);
   const navBlur = useTransform(springProgress, [0, 1], [4, 24]);
   const navOpacity = useTransform(springProgress, [0, 1], [0.8, 0.85]);
+  
+  // Derived transform values for style properties
+  const navBackdrop = useTransform(navBlur, (v) => `blur(${v}px)`);
+  const navBg = useTransform(navOpacity, (v) => `hsl(var(--background) / ${v})`);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -78,8 +82,8 @@ export function DynamicNavbar() {
             paddingRight: navPadding,
             borderRadius: navRadius,
             marginTop: navMarginTop,
-            backdropFilter: useTransform(navBlur, (v) => `blur(${v}px)`),
-            backgroundColor: useTransform(navOpacity, (v) => `hsl(var(--background) / ${v})`),
+            backdropFilter: navBackdrop,
+            backgroundColor: navBg,
             borderColor: isScrolled ? 'hsl(var(--border) / 0.4)' : 'transparent',
             borderBottomColor: 'hsl(var(--border) / 0.3)',
             boxShadow: isScrolled ? '0 10px 40px -10px rgba(0, 0, 0, 0.1)' : 'none',

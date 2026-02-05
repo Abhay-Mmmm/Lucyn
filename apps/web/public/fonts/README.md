@@ -1,41 +1,58 @@
 # Milanesa Serif Font Setup
 
-This website uses **Milanesa Serif Regular** as its exclusive font.
+This website uses **Milanesa Serif** as its exclusive font.
 
-## Required Font Files
+## Current Font File
 
-Place the following font files in this directory (`/public/fonts/`):
+The font is currently provided as an OpenType font:
 
-1. `MilanesaSerif-Regular.woff2` (recommended, smallest file size)
-2. `MilanesaSerif-Regular.woff` (fallback for older browsers)
-3. `MilanesaSerif-Regular.ttf` (fallback for legacy support)
+- `Milaness.otf` - OpenType format (currently in use)
 
 ## File Naming Convention
 
-Make sure the font files are named exactly as listed above:
-- `MilanesaSerif-Regular.woff2`
-- `MilanesaSerif-Regular.woff`
-- `MilanesaSerif-Regular.ttf`
+The font file is named `Milaness.otf` and is referenced in:
+- `apps/web/app/globals.css` - @font-face declaration
+- `apps/web/app/layout.tsx` - Critical inline CSS
+- `apps/web/tailwind.config.ts` - Font family configuration
 
-## Converting Font Files
+## Converting to Web-Ready Formats (Optional)
 
-If you have the font in OTF or TTF format, you can convert it to WOFF2 using:
+For better performance and browser compatibility, you can convert the OTF to web-optimized formats:
+
+**Recommended formats:**
+1. `WOFF2` (recommended, smallest file size, best compression)
+2. `WOFF` (fallback for older browsers)
+3. `TTF` (fallback for legacy support)
+
+**Conversion tools:**
 - [Transfonter](https://transfonter.org/) - Online converter
 - [Font Squirrel Webfont Generator](https://www.fontsquirrel.com/tools/webfont-generator)
 
+**After conversion:**
+1. Place the converted files in this directory
+2. Update the @font-face src in `globals.css` and `layout.tsx` to include multiple formats
+3. Example multi-format @font-face:
+   ```css
+   @font-face {
+     font-family: 'Milanesa Serif';
+     src: url('/fonts/Milaness.woff2') format('woff2'),
+          url('/fonts/Milaness.woff') format('woff'),
+          url('/fonts/Milaness.otf') format('opentype');
+     font-weight: 400;
+     font-style: normal;
+     font-display: block;
+   }
+   ```
+
 ## Licensing
 
-Ensure you have the appropriate license to use Milanesa Serif for web usage.
+Ensure you have the appropriate license to use Milanesa Serif for web usage. This is a premium typeface from Sudtipos.
 
-## Verification
-
-After adding the font files, the structure should look like:
+## Current Structure
 
 ```
 public/
   fonts/
-    MilanesaSerif-Regular.woff2
-    MilanesaSerif-Regular.woff
-    MilanesaSerif-Regular.ttf
+    Milaness.otf
     README.md
 ```

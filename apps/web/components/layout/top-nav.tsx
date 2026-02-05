@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -12,6 +13,7 @@ import {
 } from '@radix-ui/react-dropdown-menu';
 import { Bell, Search, LogOut, User, Settings } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { createClient } from '@/lib/supabase/client';
 
 interface TopNavProps {
   user?: {
@@ -22,11 +24,20 @@ interface TopNavProps {
 }
 
 export function TopNav({ user }: TopNavProps) {
+  const router = useRouter();
+  const supabase = createClient();
+
   const initials = user?.name
     ?.split(' ')
     .map((n) => n[0])
     .join('')
     .toUpperCase() || 'U';
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
+  };
 
   return (
     <header className="sticky top-0 z-30 h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -72,16 +83,25 @@ export function TopNav({ user }: TopNavProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="my-1 h-px bg-border" />
-              <DropdownMenuItem className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent">
+              <DropdownMenuItem
+                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                onClick={() => router.push('/profile')}
+              >
                 <User className="h-4 w-4" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent">
+              <DropdownMenuItem
+                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                onClick={() => router.push('/settings')}
+              >
                 <Settings className="h-4 w-4" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator className="my-1 h-px bg-border" />
-              <DropdownMenuItem className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10">
+              <DropdownMenuItem
+                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+                onClick={handleSignOut}
+              >
                 <LogOut className="h-4 w-4" />
                 Sign out
               </DropdownMenuItem>

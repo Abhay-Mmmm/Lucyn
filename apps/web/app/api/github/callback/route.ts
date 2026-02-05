@@ -18,6 +18,21 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/dashboard?error=no_code', request.url));
   }
 
+  // CSRF protection: validate state parameter against stored cookie
+  const cookieStore = cookies();
+  const storedState = cookieStore.get('github_oauth_state')?.value;
+
+  if (!state || !storedState || state !== storedState) {
+    // Clean up the cookie if it exists
+    if (storedState) {
+      cookieStore.delete('github_oauth_state');
+    }
+    return NextResponse.redirect(new URL('/dashboard?error=invalid_state', request.url));
+  }
+
+  // State is valid - delete the cookie to prevent reuse
+  cookieStore.delete('github_oauth_state');
+
   try {
     // Get the current user from Supabase first
     const supabase = createRouteHandlerClient({ cookies });

@@ -122,30 +122,46 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create or update repository
-    const repository = await prisma.repository.upsert({
-      where: { githubId: String(repoId) },
-      update: {
-        name: repoName,
-        fullName,
-        description,
-        language,
-        isPrivate,
-        defaultBranch,
-        isActive: true,
-        updatedAt: new Date(),
-      },
-      create: {
+    // Check if repository already exists in this organization
+    const existingRepo = await prisma.repository.findFirst({
+      where: {
         githubId: String(repoId),
-        name: repoName,
-        fullName,
-        description,
-        language,
-        isPrivate,
-        defaultBranch,
         organizationId: user.organizationId,
       },
     });
+
+    let repository;
+
+    if (existingRepo) {
+      // Update existing repository
+      repository = await prisma.repository.update({
+        where: { id: existingRepo.id },
+        data: {
+          name: repoName,
+          fullName,
+          description,
+          language,
+          isPrivate,
+          defaultBranch,
+          isActive: true,
+          updatedAt: new Date(),
+        },
+      });
+    } else {
+      // Create new repository for this organization
+      repository = await prisma.repository.create({
+        data: {
+          githubId: String(repoId),
+          name: repoName,
+          fullName,
+          description,
+          language,
+          isPrivate,
+          defaultBranch,
+          organizationId: user.organizationId,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,

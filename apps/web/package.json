@@ -10,8 +10,6 @@
     "clean": "rimraf node_modules .turbo .next"
   },
   "dependencies": {
-    "@fontsource/instrument-serif": "^5.2.8",
-    "@fontsource/inter": "^5.2.8",
     "@lucyn/ai": "*",
     "@lucyn/database": "*",
     "@lucyn/shared": "*",

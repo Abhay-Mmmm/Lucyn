@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
+import { supabaseAdmin } from '@/lib/supabase';
 import { signUpSchema } from '@lucyn/shared';
 
 export async function POST(request: Request) {
@@ -47,39 +48,59 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create organization in Prisma
+    // Create organization and user in a single atomic transaction
     const slug = organizationName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
 
-    const organization = await prisma.organization.create({
-      data: {
-        name: organizationName,
-        slug: `${slug}-${Date.now()}`, // Ensure uniqueness
-      },
-    });
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        // Create organization first
+        const organization = await tx.organization.create({
+          data: {
+            name: organizationName,
+            slug: `${slug}-${Date.now()}`, // Ensure uniqueness
+          },
+        });
 
-    // Create user in Prisma (linked to Supabase user)
-    const user = await prisma.user.create({
-      data: {
-        id: authData.user.id, // Use Supabase user ID
-        email,
-        name,
-        organizationId: organization.id,
-        role: 'ADMIN', // First user is admin
-      },
-    });
+        // Create user linked to the organization
+        const user = await tx.user.create({
+          data: {
+            id: authData.user.id, // Use Supabase user ID
+            email,
+            name,
+            organizationId: organization.id,
+            role: 'ADMIN', // First user is admin
+          },
+        });
 
-    return NextResponse.json({
-      success: true,
-      message: 'Account created. Please check your email to verify.',
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-    });
+        return { organization, user };
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Account created. Please check your email to verify.',
+        user: {
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+        },
+      });
+    } catch (dbError) {
+      // Transaction failed - cleanup the Supabase user
+      console.error('Database transaction failed:', dbError);
+      
+      try {
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+        console.log('Cleaned up Supabase user after DB failure');
+      } catch (cleanupError) {
+        console.error('Failed to cleanup Supabase user:', cleanupError);
+      }
+
+      // Re-throw the original error to be handled by outer catch
+      throw dbError;
+    }
   } catch (error) {
     console.error('Signup error:', error);
     

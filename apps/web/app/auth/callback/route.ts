@@ -24,9 +24,19 @@ export async function GET(request: Request) {
 async function syncUserToDatabase(supabaseUser: any) {
   try {
     const email = supabaseUser.email;
+    
+    // Guard: Verify email exists and is a non-empty string
+    if (!email || typeof email !== 'string' || email.trim() === '') {
+      console.error('Cannot sync user to database: email is missing or invalid', {
+        userId: supabaseUser.id,
+        hasEmail: !!supabaseUser.email,
+      });
+      return; // Skip DB sync - user can still access app with Supabase auth
+    }
+
     const name = supabaseUser.user_metadata?.name || 
                  supabaseUser.user_metadata?.full_name ||
-                 email?.split('@')[0] || 
+                 email.split('@')[0] || 
                  'User';
     const orgName = supabaseUser.user_metadata?.organization_name || `${name}'s Org`;
 
@@ -50,8 +60,25 @@ async function syncUserToDatabase(supabaseUser: any) {
     });
 
     if (existingByEmail) {
-      // Link Supabase user to existing Prisma user by updating the ID
-      // This handles the case where email signup created the user first
+      // Link Supabase user to existing Prisma user
+      if (existingByEmail.id === supabaseUser.id) {
+        // IDs match - just update activity timestamp
+        await prisma.user.update({
+          where: { id: existingByEmail.id },
+          data: { lastActiveAt: new Date() },
+        });
+      } else {
+        // IDs don't match - this indicates the user was created before Supabase integration
+        // or there's a data inconsistency. For safety, we can't update the primary key
+        // as it would break foreign key relationships. Log and skip.
+        console.error('User ID mismatch during OAuth sync:', {
+          email,
+          existingId: existingByEmail.id,
+          supabaseId: supabaseUser.id,
+        });
+        // Note: In production, you may want to implement a migration strategy
+        // or manual resolution for these cases
+      }
       return;
     }
 
@@ -61,28 +88,35 @@ async function syncUserToDatabase(supabaseUser: any) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
 
-    const organization = await prisma.organization.create({
-      data: {
-        name: orgName,
-        slug: `${slug}-${Date.now()}`,
-      },
+    // Wrap organization and user creation in a transaction for atomicity
+    await prisma.$transaction(async (tx) => {
+      const organization = await tx.organization.create({
+        data: {
+          name: orgName,
+          slug: `${slug}-${Date.now()}`,
+        },
+      });
+
+      // Create user linked to the organization
+      await tx.user.create({
+        data: {
+          id: supabaseUser.id,
+          email,
+          name,
+          organizationId: organization.id,
+          role: 'ADMIN',
+          avatarUrl: supabaseUser.user_metadata?.avatar_url,
+        },
+      });
     });
 
-    // Create user in Prisma
-    await prisma.user.create({
-      data: {
-        id: supabaseUser.id,
-        email,
-        name,
-        organizationId: organization.id,
-        role: 'ADMIN',
-        avatarUrl: supabaseUser.user_metadata?.avatar_url,
-      },
-    });
-
-    console.log(`Synced user ${email} to database`);
+    console.log('Synced user to database', { userId: supabaseUser.id });
   } catch (error) {
     // Log but don't fail - user can still access app
-    console.error('Error syncing user to database:', error);
+    // Avoid logging error object directly as it may contain PII
+    console.error('Error syncing user to database', {
+      userId: supabaseUser?.id,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+    });
   }
 }
