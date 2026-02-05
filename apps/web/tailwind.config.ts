@@ -18,10 +18,10 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        sans: ["'Grenda'", 'system-ui', 'sans-serif'],
-        serif: ["'Grenda'", 'system-ui', 'sans-serif'],
+        sans: ["'Absans'", 'system-ui', 'sans-serif'],
+        serif: ["'Absans'", 'system-ui', 'sans-serif'],
         display: ["'Milanesa Serif'", 'Georgia', 'serif'],
-        mono: ["'Grenda'", 'ui-monospace', 'monospace'],
+        mono: ["'Absans'", 'ui-monospace', 'monospace'],
       },
       colors: {
         border: 'hsl(var(--border))',

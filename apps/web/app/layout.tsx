@@ -18,8 +18,10 @@ export default function RootLayout({
         {/* Critical CSS - Load both fonts before content renders */}
         <style dangerouslySetInnerHTML={{ __html: `
           @font-face {
-            font-family: 'Grenda';
-            src: url('/fonts/grenda.otf') format('opentype');
+            font-family: 'Absans';
+            src: url('/fonts/absans-main/Absans-Regular.woff2') format('woff2'),
+                 url('/fonts/absans-main/Absans-Regular.woff') format('woff'),
+                 url('/fonts/absans-main/Absans-Regular.otf') format('opentype');
             font-weight: 400;
             font-style: normal;
             font-display: swap;
@@ -32,7 +34,7 @@ export default function RootLayout({
             font-display: block;
           }
           html, body {
-            font-family: 'Grenda', system-ui, sans-serif;
+            font-family: 'Absans', system-ui, sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
           }
