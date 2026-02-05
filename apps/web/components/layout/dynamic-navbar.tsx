@@ -104,7 +104,7 @@ export function DynamicNavbar() {
             onClick={(e) => handleNavClick(e, '#home')}
           >
             <span
-              className={`font-display tracking-tight text-foreground transition-[font-size] duration-700 ease-[cubic-bezier(0.33,1,0.68,1)] ${
+              className={`font-display tracking-tight text-foreground transition-[font-size] duration-700 ease-out-quart ${
                 isScrolled ? 'text-xl' : 'text-2xl'
               }`}
             >

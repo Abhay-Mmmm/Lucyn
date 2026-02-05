@@ -18,10 +18,10 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        serif: ["'Milanesa Serif'"],
-        display: ["'Milanesa Serif'"],
-        mono: ["'Milanesa Serif'"],
-        sans: ["'Milanesa Serif'"],
+        sans: ["'Absans'", 'system-ui', 'sans-serif'],
+        serif: ["'Absans'", 'system-ui', 'sans-serif'],
+        display: ["'Milanesa Serif'", 'Georgia', 'serif'],
+        mono: ["'Absans'", 'ui-monospace', 'monospace'],
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -76,6 +76,9 @@ const config: Config = {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+      },
+      transitionTimingFunction: {
+        'out-quart': 'cubic-bezier(0.25, 1, 0.5, 1)',
       },
     },
   },

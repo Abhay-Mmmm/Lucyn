@@ -225,8 +225,8 @@ export default function TermsPage() {
             <span className="text-sm text-muted-foreground">© 2026 All rights reserved.</span>
           </div>
           <nav className="flex items-center gap-6 text-sm text-muted-foreground">
-            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
           </nav>
         </div>
       </footer>

@@ -315,18 +315,14 @@ export default function Home() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {useCases.map((useCase, index) => (
-              <motion.div
+            {useCases.map((useCase) => (
+              <div
                 key={useCase.title}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-50px' }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="group p-8 rounded-2xl border border-border/50 bg-card/50 hover:bg-card hover:border-border transition-all duration-300"
+                className="group p-8 rounded-2xl border border-border/50 bg-card/30 hover:bg-card/80 hover:border-foreground/20 hover:shadow-[0_0_30px_-5px_rgba(255,255,255,0.1)] transition-all duration-300"
               >
                 <div className="flex items-start gap-5">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-foreground/5 group-hover:bg-foreground/10 transition-colors">
-                    <useCase.icon className="h-6 w-6 text-foreground" />
+                    <useCase.icon className="h-6 w-6 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-foreground mb-2">
@@ -337,7 +333,7 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -491,8 +487,8 @@ export default function Home() {
             <span className="text-sm text-muted-foreground">© 2026 All rights reserved.</span>
           </div>
           <nav className="flex items-center gap-6 text-sm text-muted-foreground">
-            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
           </nav>
         </div>
       </footer>

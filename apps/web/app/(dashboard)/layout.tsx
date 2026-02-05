@@ -22,7 +22,7 @@ export default async function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background font-sans">
       <Sidebar />
       <div className="pl-64 transition-all duration-300">
         <TopNav user={user} />

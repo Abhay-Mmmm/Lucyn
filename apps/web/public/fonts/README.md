@@ -1,52 +1,37 @@
-# Milanesa Serif Font Setup
+# Lucyn Font Setup
 
-This website uses **Milanesa Serif** as its exclusive font.
+This website uses a dual-font system:
+- **Absans** - Main UI font for body text, buttons, navigation, dashboard
+- **Milanesa Serif** - Display font for landing page headings and branding
 
-## Current Font File
+## Current Font Files
 
-The font is currently provided as an OpenType font:
+### Absans (Main UI Font)
+Located in `absans-main/`:
+- `Absans-Regular.woff2` - WOFF2 format (primary, best compression)
+- `Absans-Regular.woff` - WOFF format (fallback)
+- `Absans-Regular.otf` - OpenType format (legacy fallback)
 
-- `Milaness.otf` - OpenType format (currently in use)
+### Milanesa Serif (Display Font)
+- `Milaness.otf` - OpenType format
 
-## File Naming Convention
+## Usage
 
-The font file is named `Milaness.otf` and is referenced in:
-- `apps/web/app/globals.css` - @font-face declaration
+### Absans (default)
+Applied automatically to all UI elements via `font-sans` class.
+
+### Milanesa Serif
+Use the `font-display` class for headings:
+```jsx
+<h1 className="font-display text-5xl">Your Heading</h1>
+```
+
+## File References
+
+Font configurations are in:
+- `apps/web/app/globals.css` - @font-face declarations
 - `apps/web/app/layout.tsx` - Critical inline CSS
 - `apps/web/tailwind.config.ts` - Font family configuration
-
-## Converting to Web-Ready Formats (Optional)
-
-For better performance and browser compatibility, you can convert the OTF to web-optimized formats:
-
-**Recommended formats:**
-1. `WOFF2` (recommended, smallest file size, best compression)
-2. `WOFF` (fallback for older browsers)
-3. `TTF` (fallback for legacy support)
-
-**Conversion tools:**
-- [Transfonter](https://transfonter.org/) - Online converter
-- [Font Squirrel Webfont Generator](https://www.fontsquirrel.com/tools/webfont-generator)
-
-**After conversion:**
-1. Place the converted files in this directory
-2. Update the @font-face src in `globals.css` and `layout.tsx` to include multiple formats
-3. Example multi-format @font-face:
-   ```css
-   @font-face {
-     font-family: 'Milanesa Serif';
-     src: url('/fonts/Milaness.woff2') format('woff2'),
-          url('/fonts/Milaness.woff') format('woff'),
-          url('/fonts/Milaness.otf') format('opentype');
-     font-weight: 400;
-     font-style: normal;
-     font-display: block;
-   }
-   ```
-
-## Licensing
-
-Ensure you have the appropriate license to use Milanesa Serif for web usage. This is a premium typeface from Sudtipos.
 
 ## Current Structure
 
@@ -55,4 +40,8 @@ public/
   fonts/
     Milaness.otf
     README.md
+    absans-main/
+      Absans-Regular.woff2
+      Absans-Regular.woff
+      Absans-Regular.otf
 ```
