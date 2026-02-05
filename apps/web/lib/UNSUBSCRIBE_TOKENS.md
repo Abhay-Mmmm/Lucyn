@@ -76,10 +76,17 @@ user@example.com|1738963200000|a1b2c3d4e5f6...
 ### Discord Notifications
 ```typescript
 // packages/discord/src/notifications/weekly-summary.ts
-import { generateUnsubscribeToken } from '@lucyn/web/lib/unsubscribe-token';
+// Note: For external packages like Discord, you have two options:
+// 1. Export unsubscribe-token from @lucyn/web package and import it
+// 2. Implement the same HMAC signing logic directly in the Discord package
+// 
+// Option 1 requires adding to packages/web/package.json exports:
+//   "exports": { "./lib/unsubscribe-token": "./lib/unsubscribe-token.ts" }
+//
+// For now, tokens should be generated in the web app context:
+import { getUnsubscribeUrl } from '@/lib/email-utils';
 
-const token = generateUnsubscribeToken(user.email);
-const unsubscribeUrl = `${baseUrl}/unsubscribe?token=${token}`;
+const unsubscribeUrl = getUnsubscribeUrl(user.email);
 ```
 
 ### Email Service

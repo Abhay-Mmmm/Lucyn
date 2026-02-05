@@ -3,8 +3,11 @@ import { createHmac, timingSafeEqual } from 'crypto';
 const TOKEN_SECRET = process.env.UNSUBSCRIBE_TOKEN_SECRET || process.env.NEXTAUTH_SECRET || '';
 const TOKEN_EXPIRY_HOURS = 72; // 3 days
 
-if (!TOKEN_SECRET) {
+// Only warn if UNSUBSCRIBE_TOKEN_SECRET is explicitly not set (falling back to NEXTAUTH_SECRET)
+if (!process.env.UNSUBSCRIBE_TOKEN_SECRET && process.env.NEXTAUTH_SECRET) {
   console.warn('UNSUBSCRIBE_TOKEN_SECRET not set, falling back to NEXTAUTH_SECRET');
+} else if (!TOKEN_SECRET) {
+  console.error('Neither UNSUBSCRIBE_TOKEN_SECRET nor NEXTAUTH_SECRET is set - token signing will fail');
 }
 
 interface UnsubscribeTokenPayload {

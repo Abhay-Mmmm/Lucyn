@@ -83,17 +83,24 @@ async function syncUserToDatabase(supabaseUser: any) {
     }
 
     // Create new organization for OAuth users
-    const slug = orgName
+    // Sanitize the org name to create a valid slug base
+    let slugBase = orgName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
+      .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+    
+    // If the sanitized slug is empty or only contained special chars,
+    // use a safe fallback
+    if (!slugBase || slugBase.length === 0) {
+      slugBase = 'org';
+    }
 
     // Wrap organization and user creation in a transaction for atomicity
     await prisma.$transaction(async (tx) => {
       const organization = await tx.organization.create({
         data: {
           name: orgName,
-          slug: `${slug}-${Date.now()}`,
+          slug: `${slugBase}-${Date.now()}`,
         },
       });
 

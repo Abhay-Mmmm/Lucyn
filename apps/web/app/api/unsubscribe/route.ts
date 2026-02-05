@@ -4,16 +4,55 @@ import { verifyUnsubscribeToken } from '@/lib/unsubscribe-token';
 import { rateLimit } from '@/lib/redis';
 
 /**
- * Get client IP address from request headers
+ * List of trusted proxy IPs that are allowed to set X-Forwarded-For.
+ * Configure this based on your infrastructure (e.g., load balancer IPs).
+ * 
+ * IMPORTANT: Your infrastructure must be configured to OVERWRITE (not append to)
+ * the X-Forwarded-For header at the edge proxy/load balancer to prevent spoofing.
+ */
+const TRUSTED_PROXY_IPS = new Set(
+  (process.env.TRUSTED_PROXY_IPS || '').split(',').filter(Boolean).map(ip => ip.trim())
+);
+
+/**
+ * Get client IP address from request headers.
+ * 
+ * Security notes:
+ * - X-Forwarded-For can be spoofed if not properly handled by infrastructure
+ * - We use the RIGHTMOST IP in XFF when behind a known load balancer, as this
+ *   is typically the IP added by the trusted edge proxy
+ * - Falls back to x-real-ip or 'unknown' if XFF is not available/trusted
+ * 
+ * @param request - The incoming request
+ * @returns The client IP address or 'unknown'
  */
 function getClientIp(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
   
   if (forwarded) {
-    return forwarded.split(',')[0].trim();
+    const ips = forwarded.split(',').map(ip => ip.trim());
+    
+    // If we have trusted proxies configured, use the rightmost IP
+    // (the one added by our trusted edge proxy)
+    if (TRUSTED_PROXY_IPS.size > 0) {
+      // In a properly configured setup, the rightmost IP is added by our
+      // trusted load balancer and represents the actual client IP
+      const clientIp = ips[ips.length - 1];
+      if (clientIp) {
+        return clientIp;
+      }
+    } else {
+      // No trusted proxies configured - use leftmost IP with caution
+      // Warning: This can be spoofed if XFF is not overwritten at edge
+      const clientIp = ips[0];
+      if (clientIp) {
+        return clientIp;
+      }
+    }
   }
   
+  // Fallback to x-real-ip (typically set by nginx)
   if (realIp) {
     return realIp.trim();
   }

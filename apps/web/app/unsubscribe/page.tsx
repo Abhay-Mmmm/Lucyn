@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -14,21 +14,21 @@ export default function UnsubscribePage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Ref to track if unsubscribe is in progress to prevent duplicate calls
+  const unsubscribeInProgressRef = useRef(false);
 
-  useEffect(() => {
-    // Auto-submit if token is present
-    if (token && !isSubmitted && !isLoading) {
-      handleUnsubscribe();
-    } else if (!token) {
-      setError('Invalid unsubscribe link. Please use the link from your email.');
-    }
-  }, [token]);
-
-  const handleUnsubscribe = async () => {
+  const handleUnsubscribe = useCallback(async () => {
     if (!token) {
       setError('Invalid unsubscribe link. Please use the link from your email.');
       return;
     }
+    
+    // Prevent duplicate submissions using ref
+    if (unsubscribeInProgressRef.current) {
+      return;
+    }
+    unsubscribeInProgressRef.current = true;
 
     setIsLoading(true);
     setError(null);
@@ -63,8 +63,18 @@ export default function UnsubscribePage() {
       );
     } finally {
       setIsLoading(false);
+      unsubscribeInProgressRef.current = false;
     }
-  };
+  }, [token]);
+
+  // Auto-submit when token is present
+  useEffect(() => {
+    if (token && !isSubmitted && !isLoading) {
+      handleUnsubscribe();
+    } else if (!token) {
+      setError('Invalid unsubscribe link. Please use the link from your email.');
+    }
+  }, [token, isSubmitted, isLoading, handleUnsubscribe]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">

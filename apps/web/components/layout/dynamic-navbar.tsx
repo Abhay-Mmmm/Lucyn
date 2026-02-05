@@ -149,6 +149,7 @@ export function DynamicNavbar() {
             className="md:hidden p-2 rounded-full hover:bg-muted/50 transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
+            aria-expanded={isMobileMenuOpen}
           >
             {isMobileMenuOpen ? (
               <X className="h-5 w-5 text-foreground" />
