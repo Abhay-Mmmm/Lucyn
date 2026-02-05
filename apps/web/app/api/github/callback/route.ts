@@ -129,7 +129,7 @@ export async function GET(request: Request) {
       },
     });
 
-    console.log(`GitHub connected for user: ${session.user.email} (${githubUser.login})`);
+    console.log(`GitHub connected for userId: ${session.user.id} (${githubUser.login})`);
 
     // Redirect back to dashboard with success message
     return NextResponse.redirect(

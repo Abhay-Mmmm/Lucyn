@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { supabaseAdmin } from '@/lib/supabase';
 import { signUpSchema } from '@lucyn/shared';
 
@@ -104,10 +105,22 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Signup error:', error);
     
-    // Handle unique constraint errors
-    if (error instanceof Error && error.message.includes('Unique constraint')) {
+    // Handle Prisma unique constraint errors (P2002)
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      // Extract the field(s) that caused the constraint violation
+      const target = error.meta?.target;
+      
+      // Check if email field caused the violation
+      if (Array.isArray(target) && target.includes('email')) {
+        return NextResponse.json(
+          { error: 'An account with this email already exists' },
+          { status: 409 }
+        );
+      }
+      
+      // Generic unique constraint error for other fields
       return NextResponse.json(
-        { error: 'An account with this email already exists' },
+        { error: 'A record with these values already exists' },
         { status: 409 }
       );
     }

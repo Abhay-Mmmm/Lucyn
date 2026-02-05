@@ -1,21 +1,86 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { verifyUnsubscribeToken } from '@/lib/unsubscribe-token';
+import { rateLimit } from '@/lib/redis';
+
+/**
+ * Get client IP address from request headers
+ */
+function getClientIp(request: Request): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const realIp = request.headers.get('x-real-ip');
+  
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  
+  if (realIp) {
+    return realIp.trim();
+  }
+  
+  return 'unknown';
+}
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { email } = body;
+    // Extract token from body or query params
+    const url = new URL(request.url);
+    let token = url.searchParams.get('token');
+    
+    // If not in query, try body
+    if (!token) {
+      let body;
+      try {
+        body = await request.json();
+      } catch (error) {
+        if (error instanceof SyntaxError) {
+          return NextResponse.json(
+            { error: 'Invalid JSON in request body' },
+            { status: 400 }
+          );
+        }
+        throw error;
+      }
+      
+      token = body.token;
+    }
 
-    if (!email || typeof email !== 'string') {
+    // Validate token presence
+    if (!token || typeof token !== 'string') {
       return NextResponse.json(
-        { error: 'Email is required' },
+        { error: 'Unsubscribe token is required' },
         { status: 400 }
       );
     }
 
-    // Find user by email and update notification preferences
+    // Rate limiting by IP address (5 requests per 60 seconds per IP)
+    const clientIp = getClientIp(request);
+    const rateLimitResult = await rateLimit(`unsubscribe:${clientIp}`, 5, 60);
+    
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
+    // Verify token and extract email
+    let email: string;
+    try {
+      const payload = verifyUnsubscribeToken(token);
+      email = payload.email;
+    } catch (error) {
+      // Return 401 for invalid/expired tokens
+      const message = error instanceof Error ? error.message : 'Invalid token';
+      return NextResponse.json(
+        { error: message },
+        { status: 401 }
+      );
+    }
+
+    // Find user by verified email
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email },
     });
 
     if (!user) {

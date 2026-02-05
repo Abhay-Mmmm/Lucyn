@@ -72,7 +72,7 @@ async function syncUserToDatabase(supabaseUser: any) {
         // or there's a data inconsistency. For safety, we can't update the primary key
         // as it would break foreign key relationships. Log and skip.
         console.error('User ID mismatch during OAuth sync:', {
-          email,
+          emailHash: email.substring(0, 3) + '***', // Redacted for privacy
           existingId: existingByEmail.id,
           supabaseId: supabaseUser.id,
         });

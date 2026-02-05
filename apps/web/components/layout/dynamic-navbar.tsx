@@ -40,6 +40,7 @@ export function DynamicNavbar() {
       scrollProgress.set(newIsScrolled ? 1 : 0);
     };
 
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scrollProgress]);
