@@ -17,6 +17,14 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const message = searchParams.get('message');
+  const urlError = searchParams.get('error');
+
+  // Map URL error codes to user-friendly messages
+  const errorMessages: Record<string, string> = {
+    missing_token: 'Verification link is invalid. Please sign up again.',
+    invalid_or_expired_token: 'This verification link has expired. Please request a new one.',
+    verification_failed: 'Email verification failed. Please try again.',
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,9 +57,9 @@ export default function LoginPage() {
           </div>
         )}
 
-        {error && (
+        {(error || urlError) && (
           <div className="bg-destructive/10 text-destructive text-sm p-4 rounded-lg text-center">
-            {error}
+            {error || (urlError && errorMessages[urlError]) || 'An error occurred. Please try again.'}
           </div>
         )}
 

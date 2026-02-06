@@ -26,6 +26,8 @@ export default function SignupPage() {
   const [orgName, setOrgName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [resending, setResending] = useState(false);
 
   // Real-time password validation
   const passwordValidation = useMemo(() => validatePassword(password), [password]);
@@ -59,13 +61,92 @@ export default function SignupPage() {
         return;
       }
 
-      router.push('/login?message=Check your email to confirm your account');
+      // Show the "check your email" state instead of redirecting
+      setEmailSent(true);
+      setLoading(false);
     } catch (err) {
       setError('Something went wrong. Please try again.');
       setLoading(false);
     }
   };
 
+  const handleResend = async () => {
+    setResending(true);
+    setError('');
+    try {
+      const response = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error || 'Failed to resend. Please try again.');
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setResending(false);
+    }
+  };
+
+  // ── Email-sent confirmation screen ──────────────────────────────
+  if (emailSent) {
+    return (
+      <AuthLayout
+        title="Check your email"
+        subtitle={`We sent a verification link to ${email}`}
+      >
+        <div className="space-y-6">
+          <div className="bg-primary/10 text-primary text-sm p-4 rounded-lg text-center">
+            Click the link in the email to verify your account. The link expires in 24 hours.
+          </div>
+
+          {error && (
+            <div className="bg-destructive/10 text-destructive text-sm p-4 rounded-lg text-center">
+              {error}
+            </div>
+          )}
+
+          <div className="text-center space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Didn't receive the email? Check your spam folder, or
+            </p>
+            <Button
+              variant="outline"
+              onClick={handleResend}
+              disabled={resending}
+              className="w-full"
+            >
+              {resending ? 'Sending...' : 'Resend verification email'}
+            </Button>
+          </div>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Wrong email?{' '}
+            <button
+              onClick={() => { setEmailSent(false); setError(''); }}
+              className="font-medium text-foreground hover:underline"
+            >
+              Go back
+            </button>
+          </p>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Already verified?{' '}
+            <Link
+              href="/login"
+              className="font-medium text-foreground hover:underline"
+            >
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </AuthLayout>
+    );
+  }
+
+  // ── Signup form ────────────────────────────────────────────────────
   return (
     <AuthLayout
       title="Start your free trial"

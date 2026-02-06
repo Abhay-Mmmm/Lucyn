@@ -80,6 +80,7 @@ enum AuthProviderType {
   GITHUB
   GOOGLE
   DISCORD
+  SLACK
 }
 
 enum IntegrationProvider {
