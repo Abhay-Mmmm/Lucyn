@@ -9,17 +9,14 @@ import {
   GitBranch,
   Lightbulb,
   Settings,
-  CheckSquare,
-  MessageSquare,
 } from 'lucide-react';
+import { RepositorySelector } from '@/components/dashboard';
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Team', href: '/dashboard/team', icon: Users },
-  { name: 'Repositories', href: '/dashboard/repos', icon: GitBranch },
+  { name: 'Repositories', href: '/dashboard/repositories', icon: GitBranch },
   { name: 'Insights', href: '/dashboard/insights', icon: Lightbulb },
-  { name: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
-  { name: 'Feedback', href: '/dashboard/feedback', icon: MessageSquare },
+  { name: 'Contributors', href: '/dashboard/team', icon: Users },
 ];
 
 const secondaryNavigation = [
@@ -43,14 +40,19 @@ export function Sidebar() {
           </Link>
         </div>
 
+        {/* Repository Selector */}
+        <div className="px-3 py-3 border-b border-[hsl(var(--sidebar-border))]">
+          <RepositorySelector />
+        </div>
+
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3 py-4">
           <div className="space-y-1">
             {navigation.map((item) => {
               // For Overview (/dashboard), only match exact path
               // For other routes, match exact path or sub-routes
-              const isActive = item.href === '/dashboard' 
-                ? pathname === item.href 
+              const isActive = item.href === '/dashboard'
+                ? pathname === item.href
                 : pathname === item.href || pathname.startsWith(item.href + '/');
               return (
                 <Link

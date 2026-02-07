@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { 
+import {
   handleOAuthCallback,
-  type OAuthProfile 
+  type OAuthProfile
 } from '@/lib/auth/oauth-handler';
 
 // ============================================
@@ -14,7 +14,7 @@ const SLACK_CLIENT_SECRET = process.env.SLACK_CLIENT_SECRET;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
 
 if (!SLACK_CLIENT_ID || !SLACK_CLIENT_SECRET || !APP_URL) {
-  throw new Error('Missing required Slack OAuth environment variables');
+  console.warn('Missing required Slack OAuth environment variables');
 }
 
 // ============================================
@@ -79,7 +79,7 @@ export async function GET(request: Request) {
     // ============================================
     // STEP 1: Exchange code for access token
     // ============================================
-    
+
     const tokenResponse = await fetch('https://slack.com/api/oauth.v2.access', {
       method: 'POST',
       headers: {
@@ -114,7 +114,7 @@ export async function GET(request: Request) {
     // ============================================
     // STEP 2: Fetch user profile from Slack
     // ============================================
-    
+
     const userResponse = await fetch('https://slack.com/api/users.identity', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -133,7 +133,7 @@ export async function GET(request: Request) {
     // ============================================
     // STEP 3: Extract verified email
     // ============================================
-    
+
     const email = userData.user?.email;
 
     if (!email) {
@@ -146,7 +146,7 @@ export async function GET(request: Request) {
     // ============================================
     // STEP 4: Build OAuth profile
     // ============================================
-    
+
     const profile: OAuthProfile = {
       email,
       name: userData.user?.name || userData.user?.real_name,
@@ -155,7 +155,7 @@ export async function GET(request: Request) {
       accessToken,
       // Note: Slack doesn't provide refresh tokens in user OAuth flow
       refreshToken: tokenData.refresh_token,
-      expiresAt: tokenData.expires_in 
+      expiresAt: tokenData.expires_in
         ? new Date(Date.now() + tokenData.expires_in * 1000)
         : undefined,
     };
@@ -165,13 +165,13 @@ export async function GET(request: Request) {
     // This enforces email uniqueness and handles
     // user creation or provider linking
     // ============================================
-    
+
     const result = await handleOAuthCallback('SLACK', profile);
 
     // ============================================
     // STEP 6: Create session cookie
     // ============================================
-    
+
     const response = NextResponse.redirect(
       new URL(
         result.isNewUser ? '/onboarding' : '/dashboard',

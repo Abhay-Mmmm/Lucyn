@@ -10,7 +10,7 @@ const SLACK_CLIENT_ID = process.env.SLACK_CLIENT_ID;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
 
 if (!SLACK_CLIENT_ID || !APP_URL) {
-  throw new Error('Missing required Slack OAuth environment variables');
+  console.warn('Missing required Slack OAuth environment variables');
 }
 
 // ============================================
@@ -29,7 +29,7 @@ if (!SLACK_CLIENT_ID || !APP_URL) {
 export async function GET() {
   // Generate CSRF protection state token
   const state = crypto.randomBytes(32).toString('hex');
-  
+
   // Store state in secure cookie for validation in callback
   const cookieStore = cookies();
   cookieStore.set('slack_oauth_state', state, {

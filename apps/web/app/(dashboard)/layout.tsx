@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createServerClient } from '@/lib/supabase/server';
 import { Sidebar } from '@/components/layout/sidebar';
 import { TopNav } from '@/components/layout/top-nav';
+import { DashboardProviders } from './providers';
 
 export default async function DashboardLayout({
   children,
@@ -22,14 +23,16 @@ export default async function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-background font-sans">
-      <Sidebar />
-      <div className="pl-64 transition-all duration-300">
-        <TopNav user={user} />
-        <main className="min-h-[calc(100vh-4rem)] p-6">
-          {children}
-        </main>
+    <DashboardProviders>
+      <div className="min-h-screen bg-background font-sans">
+        <Sidebar />
+        <div className="pl-64 transition-all duration-300">
+          <TopNav user={user} />
+          <main className="min-h-[calc(100vh-4rem)] p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </DashboardProviders>
   );
 }
