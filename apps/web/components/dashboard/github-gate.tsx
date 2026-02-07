@@ -76,7 +76,7 @@ function GitHubGateError({ error, onRetry, isRetrying }: { error: string; onRetr
 
 function GitHubConnectPrompt({ expired }: { expired?: boolean }) {
     const handleConnect = () => {
-        window.location.href = '/api/oauth/github';
+        window.location.href = '/api/github/connect';
     };
 
     return (
