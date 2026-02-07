@@ -90,6 +90,15 @@ enum IntegrationProvider {
   JIRA
 }
 
+enum SuggestionOutcome {
+  PENDING
+  ACCEPTED
+  PARTIALLY_ACCEPTED
+  IGNORED
+  REJECTED
+  OUTDATED
+}
+
 // ============================================
 // CORE MODELS
 // ============================================
@@ -227,6 +236,8 @@ model Repository {
   pullRequests   PullRequest[]
   tasks          Task[]
   codeEmbeddings CodeEmbedding[]
+  memory         RepositoryMemory?
+  aiSuggestions  AISuggestion[]
 
   @@index([organizationId])
   @@index([fullName])
@@ -291,6 +302,7 @@ model PullRequest {
   reviewers    User[]     @relation("PRReviewers")
 
   discordFeedback DiscordFeedback[]
+  aiSuggestions   AISuggestion[]
 
   @@index([repositoryId])
   @@index([authorId])
@@ -496,3 +508,94 @@ model CodeEmbedding {
   @@index([repositoryId])
   @@map("code_embeddings")
 }
+
+// ============================================
+// REPOSITORY MEMORY (Persistent Understanding)
+// ============================================
+
+model RepositoryMemory {
+  id               String   @id @default(cuid())
+  repositoryId     String   @unique
+  repository       Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  
+  // Architecture understanding
+  primaryLanguages String[]
+  frameworks       String[]
+  buildTools       String[]
+  testingFrameworks String[]
+  
+  // Structure
+  directoryMap     Json     @default("{}") // { path: { responsibility, files, exports } }
+  keyFiles         Json     @default("[]") // Files that are central to the codebase
+  entryPoints      String[]
+  
+  // Summaries
+  repoSummary      String?  @db.Text
+  architectureSummary String? @db.Text
+  
+  // Fingerprint for change detection
+  treeHash         String?
+  lastFullScanAt   DateTime?
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  patterns         RepositoryPattern[]
+  
+  @@map("repository_memories")
+}
+
+model RepositoryPattern {
+  id               String   @id @default(cuid())
+  memoryId         String
+  memory           RepositoryMemory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  
+  type             String   // "naming", "architecture", "testing", "error-handling"
+  name             String
+  description      String
+  examples         Json     @default("[]") // Array of file paths and code snippets
+  confidence       Float    @default(0.8)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@index([memoryId])
+  @@map("repository_patterns")
+}
+
+model AISuggestion {
+  id               String   @id @default(cuid())
+  repositoryId     String
+  repository       Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  pullRequestId    String?
+  pullRequest      PullRequest? @relation(fields: [pullRequestId], references: [id])
+  
+  // Suggestion content
+  type             String   // "architecture", "performance", "security", "style", "refactor"
+  title            String
+  explanation      String   @db.Text
+  whyItMatters     String?  @db.Text
+  tradeoffs        String?  @db.Text
+  suggestedChange  String?  @db.Text
+  confidence       Float    @default(0.7)
+  
+  // Context
+  affectedFiles    String[]
+  relatedPatterns  String[] // Pattern IDs
+  promptForAgents  String?  @db.Text
+  
+  // Tracking
+  commentId        String?  // GitHub comment ID if posted
+  outcome          SuggestionOutcome @default(PENDING)
+  userFeedback     String?
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  resolvedAt       DateTime?
+  
+  @@index([repositoryId])
+  @@index([pullRequestId])
+  @@index([outcome])
+  @@map("ai_suggestions")
+}
+
